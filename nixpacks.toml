@@ -2,7 +2,7 @@
 # serves both the /api routes and the built SPA (dist/). Build produces the
 # SPA in dist/ and the compiled server in server-dist/; `npm start` runs it.
 [phases.setup]
-nixPkgs = ["nodejs_20"]
+nixPkgs = ["nodejs_22"]
 
 [phases.build]
 cmds = ["npm run build"]
