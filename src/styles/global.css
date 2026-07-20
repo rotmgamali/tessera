@@ -1,0 +1,2425 @@
+@import "./tokens.css";
+@import "./keyframes.css";
+
+/* ── Font face — bundled locally ─────────────────────────────────────── */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("/fonts/Inter.woff2") format("woff2");
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ══════════════════════════════════════════════════════════════════════
+   WEB4OS — Structural Stylesheet (v3)
+   Monochrome + gold. Minimal. Depth from color, not effects.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Reset ──────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--bb-bg-deep);
+  color: var(--bb-text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── App-wide ambient gradient ──────────────────────────────────────
+   A subtle full-canvas wash sits behind every view so the whole app
+   reads as "future-blue" (light) or "warm-dark with royal gold pulse"
+   (dark) — not a flat solid color. The gradient is fixed to the #root
+   element so scrollable content inside views slides over it instead of
+   repeating the wash per section.
+
+   Intensity tuned to stay readable: at no point is contrast against
+   primary text reduced below WCAG AA. */
+
+html.dark, html.dark body, html.dark #root {
+  color: var(--bb-text-primary) !important;
+  color-scheme: dark;
+}
+html.light, html.light body, html.light #root {
+  color: var(--bb-text-primary) !important;
+  color-scheme: light;
+}
+
+html.dark body {
+  background:
+    radial-gradient(ellipse 70% 55% at 12% 8%, rgba(201, 168, 76, 0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 88% 92%, rgba(201, 168, 76, 0.05) 0%, transparent 60%),
+    linear-gradient(160deg, var(--bb-bg-deep) 0%, var(--bb-bg-surface) 100%) !important;
+}
+
+html.light body {
+  background:
+    radial-gradient(ellipse 70% 55% at 12% 8%, rgba(155, 127, 36, 0.09) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 88% 92%, rgba(155, 127, 36, 0.07) 0%, transparent 60%),
+    linear-gradient(160deg, var(--bb-bg-deep) 0%, var(--bb-bg-surface) 100%) !important;
+}
+
+/* ── Sacred-geometry texture overlay ─────────────────────────────────
+   A tileable SVG watermark that lives on `body::after` so it overlays
+   every view without interfering with #root's child layout (the app
+   uses `fixed` positioning in Welcome/Splash/modals — any `position:
+   relative` on direct children of #root breaks those layers). Dark gets
+   a hexagon lattice; light gets Flower of Life. Opacity tuned low.
+   `pointer-events: none` so clicks pass through. */
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-repeat: repeat;
+  background-position: center;
+  mask-image: radial-gradient(ellipse 120% 100% at 50% 50%, black 30%, rgba(0,0,0,0.5) 80%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 120% 100% at 50% 50%, black 30%, rgba(0,0,0,0.5) 80%, transparent 100%);
+}
+/* Raise #root above the texture so its content (including the sidebar's
+   own solid gradient bg) covers the pattern where rendered. Views that
+   don't paint a background let the grid show through. */
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+html.dark body::after {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='72' height='124.7' viewBox='0 0 72 124.7'><g fill='none' stroke='%23c9a84c' stroke-width='0.8' stroke-opacity='0.055'><path d='M36 0 L72 20.8 L72 62.35 L36 83.15 L0 62.35 L0 20.8 Z'/><path d='M36 83.15 L72 103.95 L72 124.7'/><path d='M36 83.15 L0 103.95 L0 124.7'/><path d='M72 0 L72 20.8'/><path d='M0 0 L0 20.8'/></g></svg>");
+  background-size: 72px 124.7px;
+}
+
+html.light body::after {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='208' height='240' viewBox='0 0 208 240'><g fill='none' stroke='%23b0b0b0' stroke-width='1.1' stroke-opacity='0.23'><circle cx='104' cy='120' r='60'/><circle cx='104' cy='60' r='60'/><circle cx='104' cy='180' r='60'/><circle cx='52' cy='90' r='60'/><circle cx='52' cy='150' r='60'/><circle cx='156' cy='90' r='60'/><circle cx='156' cy='150' r='60'/><circle cx='0' cy='120' r='60'/><circle cx='208' cy='120' r='60'/><circle cx='0' cy='0' r='60'/><circle cx='208' cy='0' r='60'/><circle cx='0' cy='240' r='60'/><circle cx='208' cy='240' r='60'/></g></svg>");
+  background-size: 208px 240px;
+}
+
+/* #root must be transparent so body::after shows through. The base
+   radial gold wash now lives on `body` (see html.dark/light body rules
+   above). */
+#root {
+  background: transparent !important;
+}
+
+/* Welcome / Splash / terms intercept set their own full-bleed scenes
+   using `.bb-welcome-scene` which paints on top of the body texture.
+   Cards/panels/sidebars with solid backgrounds naturally hide the
+   texture where they render. */
+
+/* ── DiagramFrame flower-of-life theme switching ─────────────────────
+   DiagramFrame renders both light- and dark-themed flower textures
+   stacked; this rule hides the off-theme one so each diagram sits on
+   a flower in its own palette. */
+html.dark .bb-diagram-flower-light { display: none; }
+html.light .bb-diagram-flower-dark { display: none; }
+
+/* ── Mermaid SVG containment ────────────────────────────────────────
+   Mermaid renders inline SVGs at their intrinsic size, which on wide
+   Gantts / BPMNs spills out of the Build Page center column. Constrain
+   the SVG to its scroll wrapper so the wrapper's overflow-x-auto can
+   actually do its job, and let the height grow naturally. */
+.bb-mermaid-wrapper { max-width: 100%; }
+.bb-mermaid-wrapper svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+/* Sankey + Gantt SVGs are typically wider than tall — let them keep
+   their aspect ratio while still respecting the column width. */
+.bb-mermaid-wrapper svg[id*="sankey"],
+.bb-mermaid-wrapper svg[id*="gantt"] {
+  width: 100%;
+  height: auto;
+}
+
+/* ── Outcome card — tokenized hover shadow ──────────────────────────
+   Keeps the card's resting shadow subtle and escalates on hover. Both
+   values read from CSS variables that flip per theme. Also renders a
+   theme-aware inner gold hairline at the top edge of the card for a
+   premium feel in dark mode (the light-mode variable is transparent). */
+
+.bb-outcome-card {
+  position: relative;
+}
+.bb-outcome-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 0 var(--bb-card-border-highlight);
+}
+.bb-outcome-card:hover {
+  box-shadow: var(--bb-card-shadow-hover) !important;
+}
+
+/* ── Glass card ─────────────────────────────────────────────────────── */
+
+.glass-card {
+  border: 1px solid var(--bb-border);
+  transition:
+    border-color var(--bb-dur-medium) var(--bb-ease),
+    box-shadow var(--bb-dur-medium) var(--bb-ease);
+}
+.glass-card:hover {
+  border-color: var(--bb-border-gold);
+}
+
+/* ── Gold glow on hover ─────────────────────────────────────────────── */
+
+.gold-glow:hover {
+  box-shadow: 0 0 16px var(--bb-gold-glow);
+}
+
+/* ── Sidebar nav ────────────────────────────────────────────────────── */
+
+.bb-sidebar {
+  background:
+    linear-gradient(180deg, var(--bb-bg-surface) 0%, var(--bb-sidebar-bottom) 100%),
+    var(--bb-bg-deep);
+  border-right: 1px solid var(--bb-border);
+}
+
+/* Top bar — opaque surface so the body grid never bleeds through. */
+.bb-topbar {
+  background:
+    linear-gradient(180deg, var(--bb-bg-surface) 0%, var(--bb-bg-deep) 100%);
+}
+
+/* ── View transition ────────────────────────────────────────────────── */
+
+.bb-view-transition {
+  transition: opacity var(--bb-dur-medium) var(--bb-ease);
+  will-change: opacity;
+}
+
+/* ── Legacy class aliases (backward compat for files outside design system) ── */
+
+.bb-nav-rail       { background: var(--bb-bg-surface); border-right: 1px solid var(--bb-border); }
+.bb-nav-logo       { /* no-op — simplified */ }
+.bb-nav-indicator  { display: none; }
+.bb-nav-item       { transition: color var(--bb-dur-fast) var(--bb-ease); }
+.nav-active        { color: var(--bb-gold) !important; background: var(--bb-gold-glow) !important; }
+.bb-nav-tooltip    { display: none; }
+.bb-divider        { height: 1px; background: var(--bb-border); }
+.bb-content-well   { /* removed — no-op */ }
+.bb-boardroom-glow { /* removed — no-op */ }
+.bb-section-heading { font-weight: 600; letter-spacing: 0.06em; color: var(--bb-gold); }
+.bb-luxury-input   { border: 1px solid var(--bb-border) !important; border-radius: 8px !important; background: transparent !important; }
+.bb-luxury-input:focus,
+.bb-luxury-input:focus-visible {
+  border-color: var(--bb-gold) !important;
+  box-shadow: 0 0 0 1px var(--bb-gold) !important;
+  outline: none !important;
+}
+.glass-card-active { border-left: 2px solid var(--bb-gold); }
+.empty-glow        { /* removed — no-op */ }
+.card-hover        { transition: transform var(--bb-dur-medium) var(--bb-ease), box-shadow var(--bb-dur-medium) var(--bb-ease); }
+.card-hover:hover  { transform: translateY(-1px); }
+
+/* Legacy utility classes */
+@layer utilities {
+  .glass {
+    background: var(--bb-bg-overlay);
+    border: 1px solid var(--bb-border);
+    border-radius: var(--radius-lg, 16px);
+  }
+  .font-heading {
+    font-family: var(--font-body);
+  }
+  .text-gold {
+    color: var(--bb-gold);
+  }
+  .text-muted {
+    color: var(--bb-text-secondary);
+  }
+}
+
+/* ── Skeleton shimmer — gray, not gold ──────────────────────────────── */
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bb-bg-elevated) 25%,
+    var(--bb-bg-surface) 50%,
+    var(--bb-bg-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: bb-shimmer 1.5s ease-in-out infinite;
+}
+
+/* ── Inputs — global luxury baseline ────────────────────────────────
+   Every bare input/textarea/select in the app inherits these. Components
+   that style inputs individually still win via className + border color,
+   but untouched inputs now carry the gold focus ring + subtle hover. */
+
+input, textarea, select {
+  transition:
+    border-color 150ms var(--bb-ease-out),
+    background-color 150ms var(--bb-ease-out),
+    box-shadow 150ms var(--bb-ease-out);
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--bb-gold-dim);
+  outline: none;
+}
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  border-color: var(--bb-gold-dim);
+  outline: none;
+}
+
+/* Brief editors — owner wants no visual focus treatment at all on the
+   Business/Voice editable textboxes. Keep the neutral border color
+   through focus states and kill any focus-visible outline. */
+textarea.bb-brief-editor:focus,
+textarea.bb-brief-editor:focus-visible,
+button.bb-brief-editor:focus,
+button.bb-brief-editor:focus-visible {
+  border-color: var(--bb-border) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+input:disabled, textarea:disabled, select:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+input[aria-invalid="true"],
+textarea[aria-invalid="true"],
+select[aria-invalid="true"] {
+  border-color: rgba(239, 68, 68, 0.40) !important;
+}
+input[aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus,
+select[aria-invalid="true"]:focus {
+  box-shadow: var(--bb-shadow-md), 0 0 0 3px rgba(239, 68, 68, 0.18) !important;
+}
+html.light input[aria-invalid="true"],
+html.light textarea[aria-invalid="true"],
+html.light select[aria-invalid="true"] {
+  border-color: rgba(185, 28, 28, 0.45) !important;
+}
+
+button, a, [role="button"] {
+  transition-duration: var(--bb-dur-fast);
+  transition-timing-function: var(--bb-ease);
+}
+
+/* ── Selection & placeholder ────────────────────────────────────────── */
+
+::selection {
+  background: rgba(201, 168, 76, 0.30);
+  color: var(--bb-text-primary);
+}
+::placeholder {
+  color: var(--bb-text-muted);
+}
+
+/* ── Scrollbar — thin, unobtrusive ──────────────────────────────────── */
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--bb-border);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--bb-text-muted);
+}
+
+/* ── Premium scroll ────────────────────────────────────────────────── */
+
+.bb-scroll {
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   MARKDOWN — .bb-md rendering
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bb-md {
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.bb-md > :first-child { margin-top: 0; }
+.bb-md > :last-child  { margin-bottom: 0; }
+
+/* Headings */
+.bb-md h1,
+.bb-md h2,
+.bb-md h3,
+.bb-md h4,
+.bb-md h5,
+.bb-md h6 {
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.4em;
+  line-height: 1.3;
+}
+.bb-md h1 { font-size: 1.25em; }
+.bb-md h2 { font-size: 1.15em; }
+.bb-md h3 { font-size: 1.05em; }
+
+/* Paragraphs */
+.bb-md p { margin: 0.5em 0; }
+
+/* Bold / italic */
+.bb-md strong { font-weight: 600; }
+.bb-md em { font-style: italic; }
+
+/* Links — gold accent */
+.bb-md-link {
+  color: var(--bb-gold);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color var(--bb-dur-fast) var(--bb-ease);
+}
+.bb-md-link:hover {
+  color: var(--bb-gold-light);
+}
+
+/* Lists */
+.bb-md ul,
+.bb-md ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+.bb-md ul { list-style-type: disc; }
+.bb-md ol { list-style-type: decimal; }
+.bb-md li { margin: 0.2em 0; }
+.bb-md li > p { margin: 0; }
+
+/* Inline code */
+.bb-md-code-inline {
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: 0.88em;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--bb-gold-light);
+}
+
+/* Code blocks */
+.bb-md-codeblock-wrapper {
+  position: relative;
+  margin: 0.8em 0;
+  border: 1px solid var(--bb-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.45);
+}
+.bb-md-codeblock-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px 4px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--bb-border);
+  min-height: 28px;
+}
+.bb-md-codeblock-lang {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.7em;
+  color: var(--bb-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+.bb-md-codeblock-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 0.72em;
+  padding: 3px 8px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--bb-text-muted);
+  cursor: pointer;
+  transition: color var(--bb-dur-fast) var(--bb-ease), background var(--bb-dur-fast) var(--bb-ease), border-color var(--bb-dur-fast) var(--bb-ease);
+  margin-left: auto;
+}
+.bb-md-codeblock-copy:hover {
+  color: var(--bb-gold);
+  background: rgba(201, 168, 76, 0.06);
+  border-color: var(--bb-border-gold);
+}
+.bb-md-pre {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0.9em 1em;
+  overflow-x: auto;
+  margin: 0;
+}
+.bb-md-code-block {
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: 0.85em;
+  line-height: 1.55;
+  color: var(--bb-text-primary);
+  white-space: pre;
+}
+
+/* Blockquotes */
+.bb-md blockquote {
+  border-left: 3px solid var(--bb-gold-dim);
+  padding-left: 0.75em;
+  margin: 0.5em 0;
+  color: var(--bb-text-secondary);
+  font-style: italic;
+}
+
+/* Horizontal rules */
+.bb-md hr {
+  border: none;
+  border-top: 1px solid var(--bb-border);
+  margin: 0.75em 0;
+}
+
+/* Tables — scroll wide authored tables inside their own box instead of
+   pushing page width on mobile (mirrors how .bb-md-pre handles code). */
+.bb-md table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 0.5em 0;
+  font-size: 0.9em;
+}
+.bb-md th,
+.bb-md td {
+  border: 1px solid var(--bb-border);
+  padding: 0.4em 0.6em;
+  text-align: left;
+}
+.bb-md th {
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
+.bb-md tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* ── Focus visible — consistent gold ring ──────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--bb-gold-dim);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Minimum click targets ─────────────────────────────────────────── */
+
+@layer utilities {
+  .min-tap {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   COMMAND PALETTE + TOAST ANIMATIONS
+   ══════════════════════════════════════════════════════════════════════ */
+
+@keyframes bb-fade-in-kf {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.bb-fade-in {
+  animation: bb-fade-in-kf 140ms ease-out both;
+}
+
+@keyframes bb-palette-enter-kf {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+.bb-palette-enter {
+  animation: bb-palette-enter-kf 160ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes bb-toast-enter-kf {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0);    }
+}
+.bb-toast-enter {
+  animation: bb-toast-enter-kf 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   BRIEF CARDS — large full-width cards need stronger lift than the
+   default card-gradient tokens (tuned for compact Tools cards).
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bb-brief-card {
+  background: linear-gradient(180deg, #32323F 0%, #292935 100%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 0 0 1px rgba(201, 168, 76, 0.04) inset,
+    0 2px 4px rgba(0, 0, 0, 0.5),
+    0 18px 48px rgba(0, 0, 0, 0.5);
+}
+
+.bb-brief-card-header {
+  background: linear-gradient(180deg, rgba(201, 168, 76, 0.04), transparent);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html.light .bb-brief-card {
+  background: linear-gradient(180deg, #FFFDF7 0%, #F4EDD8 100%);
+  border: 1px solid rgba(110, 85, 20, 0.16);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 0 0 1px rgba(201, 168, 76, 0.06) inset,
+    0 2px 4px rgba(110, 85, 20, 0.08),
+    0 12px 32px rgba(110, 85, 20, 0.10);
+}
+
+html.light .bb-brief-card-header {
+  background: linear-gradient(180deg, rgba(201, 168, 76, 0.08), transparent);
+  border-bottom: 1px solid rgba(110, 85, 20, 0.12);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   LUXURY CARD — canonical surface every card should use unless it has
+   a specific reason not to. Gradient + gold hairline + inset top-light.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bb-luxury-card {
+  background: linear-gradient(180deg, var(--bb-bg-elevated) 0%, rgba(36, 36, 46, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--bb-shadow-md);
+  border-radius: 0.875rem;
+  transition: transform 180ms var(--bb-ease-out),
+              box-shadow 180ms var(--bb-ease-out),
+              border-color 180ms var(--bb-ease-out);
+  position: relative;
+}
+.bb-luxury-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+.bb-luxury-card:hover {
+  border-color: rgba(201, 168, 76, 0.24);
+  box-shadow: var(--bb-shadow-lg);
+  transform: translateY(-1px);
+}
+.bb-luxury-card:focus-within {
+  border-color: rgba(201, 168, 76, 0.32);
+  box-shadow: var(--bb-shadow-lg), 0 0 0 3px rgba(201, 168, 76, 0.08);
+}
+
+.bb-luxury-card-clickable {
+  background: linear-gradient(180deg, var(--bb-bg-elevated) 0%, rgba(36, 36, 46, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--bb-shadow-md);
+  border-radius: 0.875rem;
+  transition: transform 180ms var(--bb-ease-out),
+              box-shadow 180ms var(--bb-ease-out),
+              border-color 180ms var(--bb-ease-out);
+  position: relative;
+  cursor: pointer;
+}
+.bb-luxury-card-clickable::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+.bb-luxury-card-clickable:hover {
+  border-color: rgba(201, 168, 76, 0.24);
+  box-shadow: var(--bb-shadow-lg);
+  transform: translateY(-1.5px);
+}
+.bb-luxury-card-clickable:focus-within {
+  border-color: rgba(201, 168, 76, 0.32);
+  box-shadow: var(--bb-shadow-lg), 0 0 0 3px rgba(201, 168, 76, 0.08);
+}
+
+html.light .bb-luxury-card,
+html.light .bb-luxury-card-clickable {
+  background: linear-gradient(180deg, #FFFDF7 0%, #F6F0DF 100%);
+  border: 1px solid rgba(110, 85, 20, 0.14);
+  box-shadow: var(--bb-shadow-md);
+}
+html.light .bb-luxury-card::before,
+html.light .bb-luxury-card-clickable::before {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+html.light .bb-luxury-card:hover,
+html.light .bb-luxury-card-clickable:hover {
+  border-color: rgba(201, 168, 76, 0.28);
+  box-shadow: var(--bb-shadow-lg);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   HELPER UTILITIES — composable finishing touches for smaller surfaces.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bb-inner-top-highlight {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+html.light .bb-inner-top-highlight {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.bb-numeric {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" on, "lnum" on;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CHAT SURFACES — Boardroom luxury polish
+   Surface-only treatments (bg + border + shadow + inner-top-highlight).
+   Never change layout. Each utility maps onto an existing DOM node in
+   Boardroom / ChatBubble / TasksDropdown without altering padding or
+   spacing tokens.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* User bubble — subtle gradient, gold-tinted hairline, shadow-sm */
+.bb-chat-bubble-user {
+  background: linear-gradient(180deg, var(--bb-bg-elevated) 0%, var(--bb-bg-surface) 100%) !important;
+  border: 1px solid rgba(201, 168, 76, 0.10) !important;
+  box-shadow: var(--bb-shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+html.light .bb-chat-bubble-user {
+  background: linear-gradient(180deg, #FFFDF7 0%, #F6F0DF 100%) !important;
+  border: 1px solid rgba(155, 127, 36, 0.18) !important;
+  box-shadow: var(--bb-shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* CEO bubble — gold tint at top, warmer border, shadow-sm */
+.bb-chat-bubble-ceo {
+  background: linear-gradient(180deg, rgba(201, 168, 76, 0.03) 0%, var(--bb-bg-elevated) 15%, var(--bb-bg-surface) 100%) !important;
+  border: 1px solid rgba(201, 168, 76, 0.12) !important;
+  box-shadow: var(--bb-shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+html.light .bb-chat-bubble-ceo {
+  background: linear-gradient(180deg, rgba(155, 127, 36, 0.05) 0%, #FFFDF7 15%, #F6F0DF 100%) !important;
+  border: 1px solid rgba(155, 127, 36, 0.22) !important;
+  box-shadow: var(--bb-shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Agent bubble — muted, same treatment family as user */
+.bb-chat-bubble-agent {
+  background: linear-gradient(180deg, var(--bb-bg-surface) 0%, var(--bb-bg-elevated) 100%) !important;
+  border: 1px solid var(--bb-border) !important;
+  box-shadow: var(--bb-shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Active-task chip — gold-tinted halo on top of existing gold surface */
+.bb-task-chip-surface {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 4px 12px rgba(201, 168, 76, 0.12),
+    var(--bb-shadow-sm);
+}
+html.light .bb-task-chip-surface {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 4px 12px rgba(155, 127, 36, 0.14),
+    var(--bb-shadow-sm);
+}
+
+/* Composer frame — transparent so the page grid/gradient shows through.
+   Just a soft border defines the input area. */
+.bb-composer-surface {
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: border-color 180ms var(--bb-ease-out);
+}
+html.light .bb-composer-surface {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.bb-composer-surface:focus-within {
+  box-shadow: none !important;
+}
+
+/* Attachment chip — gradient bg, inner top highlight, hover lift */
+.bb-attachment-chip {
+  background: linear-gradient(180deg, var(--bb-bg-elevated) 0%, var(--bb-bg-surface) 100%) !important;
+  box-shadow: var(--bb-shadow-xs), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: transform 150ms var(--bb-ease-out),
+              border-color 150ms var(--bb-ease-out),
+              box-shadow 150ms var(--bb-ease-out);
+}
+html.light .bb-attachment-chip {
+  background: linear-gradient(180deg, #FFFDF7 0%, #F6F0DF 100%) !important;
+  box-shadow: var(--bb-shadow-xs), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.bb-attachment-chip:hover {
+  transform: translateY(-1px);
+  border-color: rgba(201, 168, 76, 0.28) !important;
+  box-shadow: var(--bb-shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Suggestion chip — soft gradient, hover lift */
+.bb-suggestion-chip {
+  background: linear-gradient(180deg, var(--bb-bg-elevated) 0%, var(--bb-bg-surface) 100%) !important;
+  box-shadow: var(--bb-shadow-xs), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: transform 150ms var(--bb-ease-out),
+              border-color 150ms var(--bb-ease-out),
+              box-shadow 150ms var(--bb-ease-out);
+}
+html.light .bb-suggestion-chip {
+  background: linear-gradient(180deg, #FFFDF7 0%, #F6F0DF 100%) !important;
+  box-shadow: var(--bb-shadow-xs), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.bb-suggestion-chip:hover {
+  transform: translateY(-1px);
+  border-color: rgba(201, 168, 76, 0.30) !important;
+  box-shadow: var(--bb-shadow-sm);
+}
+
+/* Tasks dropdown panel — xl shadow, gold inner hairline */
+.bb-tasks-panel-surface {
+  box-shadow: var(--bb-shadow-xl), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+html.light .bb-tasks-panel-surface {
+  box-shadow: var(--bb-shadow-xl), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Tasks category pill — animated left-edge gold hairline */
+.bb-task-cat-pill {
+  position: relative;
+  transition: color 150ms var(--bb-ease-out),
+              background-color 150ms var(--bb-ease-out);
+}
+.bb-task-cat-pill::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 0;
+  background: var(--bb-gold);
+  transition: height 150ms var(--bb-ease-out),
+              background-color 150ms var(--bb-ease-out);
+  pointer-events: none;
+}
+.bb-task-cat-pill:hover::before {
+  height: 60%;
+}
+.bb-task-cat-pill-active::before {
+  height: 100%;
+  background: var(--bb-gold-light);
+}
+
+/* Tasks row highlighted — subtle gradient instead of flat bg */
+.bb-task-row-active {
+  background: linear-gradient(180deg, var(--bb-bg-elevated) 0%, var(--bb-bg-surface) 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+html.light .bb-task-row-active {
+  background: linear-gradient(180deg, #FFFDF7 0%, #F6F0DF 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   HERO GOLD TEXT — the OS hero-banner accent phrase (Results surface,
+   owner directive 2026-07-18: "dont skimp this is our hero banner of
+   the whole os"). The bb-gold-btn / bb-send-button gold gradient
+   family, applied as clipped display text. Both themes are safe by
+   construction: light mode re-tokens --bb-gold/--bb-gold-light to the
+   darker royal pair (#9B7F24/#B89530, ≥4.5:1 on the cream surfaces).
+   ONE ambient effect: the slow bb-hero-gold-shimmer drift
+   (keyframes.css) over an oversized gradient; reduced-motion gets the
+   static gradient. `color: transparent` (not `-webkit-text-fill`) so
+   any clip-unsupported engine still paints solid currentColor text.
+   ══════════════════════════════════════════════════════════════════════ */
+.bb-hero-gold-text {
+  background-image: linear-gradient(
+    100deg,
+    var(--bb-gold) 0%,
+    var(--bb-gold-light) 30%,
+    var(--bb-gold) 55%,
+    var(--bb-gold-light) 80%,
+    var(--bb-gold) 100%
+  );
+  background-size: 250% 100%;
+  background-position: 0% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: bb-hero-gold-shimmer 8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bb-hero-gold-text {
+    animation: none;
+  }
+}
+
+/* Send button — gold gradient, inner highlight, polished hover */
+.bb-send-button {
+  background: linear-gradient(180deg, var(--bb-gold-light) 0%, var(--bb-gold) 100%) !important;
+  box-shadow: var(--bb-shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: filter 150ms var(--bb-ease-out),
+              transform 100ms var(--bb-ease-out),
+              box-shadow 150ms var(--bb-ease-out);
+}
+.bb-send-button:hover:not(:disabled) {
+  filter: saturate(1.1) brightness(1.08);
+  box-shadow: var(--bb-shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.30);
+}
+.bb-send-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+.bb-send-button:focus-visible {
+  outline: none;
+  box-shadow: var(--bb-shadow-sm),
+              inset 0 1px 0 rgba(255, 255, 255, 0.25),
+              0 0 0 2px rgba(201, 168, 76, 0.30),
+              0 0 0 4px var(--bb-bg-deep);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   LUXURY POLISH — Team + Inbox surfaces
+   Subtle gradient fills, semantic chip variants, and micro-interactions
+   that promote flat surfaces to match the luxury-card craft level.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Gradient underline under division headers ──────────────────────── */
+.bb-division-underline {
+  position: relative;
+}
+.bb-division-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--bb-border-gold) 0%, var(--bb-border-gold) 40%, transparent 100%);
+  pointer-events: none;
+}
+
+/* ── Division group stagger — each direct child fades up 4px ───────── */
+.bb-division-stagger > * {
+  opacity: 0;
+  animation: bb-division-fade-up 250ms var(--bb-ease-out) both;
+}
+.bb-division-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.bb-division-stagger > *:nth-child(2) { animation-delay: 60ms; }
+.bb-division-stagger > *:nth-child(3) { animation-delay: 120ms; }
+.bb-division-stagger > *:nth-child(4) { animation-delay: 180ms; }
+.bb-division-stagger > *:nth-child(5) { animation-delay: 240ms; }
+.bb-division-stagger > *:nth-child(6) { animation-delay: 300ms; }
+.bb-division-stagger > *:nth-child(7) { animation-delay: 360ms; }
+
+/* ── Last-actions row — 2px gold-tint left hairline on hover ───────── */
+.bb-actions-row {
+  position: relative;
+  transition: background-color 150ms var(--bb-ease-out);
+}
+.bb-actions-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 2px;
+  height: 0;
+  background: var(--bb-gold);
+  transform: translateY(-50%);
+  transition: height 150ms var(--bb-ease-out);
+  border-radius: 1px;
+  pointer-events: none;
+}
+.bb-actions-row:hover::before {
+  height: 100%;
+}
+.bb-actions-row:hover {
+  background: rgba(45, 45, 58, 0.30);
+}
+html.light .bb-actions-row:hover {
+  background: rgba(155, 127, 36, 0.06);
+}
+
+/* ── Tool chip — inner top highlight + subtle gradient ─────────────── */
+.bb-tool-chip {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid var(--bb-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  transition: border-color 150ms var(--bb-ease-out), box-shadow 150ms var(--bb-ease-out);
+}
+.bb-tool-chip:hover {
+  border-color: var(--bb-border-gold);
+}
+html.light .bb-tool-chip {
+  background: linear-gradient(180deg, rgba(155, 127, 36, 0.08) 0%, rgba(155, 127, 36, 0.02) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* ── DM bubble — user (gold-tinted) + agent (warm) ─────────────────── */
+.bb-dm-bubble-user {
+  background: linear-gradient(180deg, rgba(201, 168, 76, 0.14) 0%, rgba(201, 168, 76, 0.06) 100%);
+  border: 1px solid rgba(201, 168, 76, 0.30);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+html.light .bb-dm-bubble-user {
+  background: linear-gradient(180deg, rgba(155, 127, 36, 0.14) 0%, rgba(155, 127, 36, 0.04) 100%);
+  border: 1px solid rgba(155, 127, 36, 0.30);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.bb-dm-bubble-agent {
+  background: linear-gradient(180deg, rgba(45, 45, 58, 0.80) 0%, rgba(34, 34, 45, 0.70) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+html.light .bb-dm-bubble-agent {
+  background: linear-gradient(180deg, rgba(255, 253, 247, 0.95) 0%, rgba(246, 240, 223, 0.80) 100%);
+  border: 1px solid rgba(110, 85, 20, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* ── DM input — luxury focus ring (shadow-lg + gold glow) ──────────── */
+.bb-dm-input:focus,
+.bb-dm-input:focus-visible {
+  border-color: rgba(201, 168, 76, 0.45) !important;
+  box-shadow: var(--bb-shadow-lg), 0 0 0 3px rgba(201, 168, 76, 0.12) !important;
+  outline: none !important;
+}
+html.light .bb-dm-input:focus,
+html.light .bb-dm-input:focus-visible {
+  border-color: rgba(155, 127, 36, 0.55) !important;
+  box-shadow: var(--bb-shadow-lg), 0 0 0 3px rgba(155, 127, 36, 0.14) !important;
+}
+
+/* ── Ticker row — pulsing dot + hover state ────────────────────────── */
+.bb-ticker-row {
+  transition: background-color 150ms var(--bb-ease-out);
+}
+.bb-ticker-row:hover {
+  background: rgba(45, 45, 58, 0.40);
+}
+html.light .bb-ticker-row:hover {
+  background: rgba(155, 127, 36, 0.06);
+}
+.bb-ticker-dot {
+  animation: bb-ticker-pulse 2.4s ease-in-out infinite;
+}
+
+/* ── Type badge — semantic gradients for EventCard badges ──────────── */
+.bb-type-badge {
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  transition: border-color 150ms var(--bb-ease-out), box-shadow 150ms var(--bb-ease-out);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+html.light .bb-type-badge {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.bb-type-badge-approval {
+  background: linear-gradient(135deg, rgba(201, 168, 76, 0.15), rgba(201, 168, 76, 0.04));
+  border-color: rgba(201, 168, 76, 0.30);
+}
+.bb-type-badge-decision {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.04));
+  border-color: rgba(245, 158, 11, 0.30);
+}
+.bb-type-badge-error {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.04));
+  border-color: rgba(239, 68, 68, 0.30);
+}
+.bb-type-badge-info {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.04));
+  border-color: rgba(59, 130, 246, 0.30);
+}
+.bb-type-badge-milestone {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.04));
+  border-color: rgba(16, 185, 129, 0.30);
+}
+.bb-type-badge-neutral {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  border-color: var(--bb-border);
+}
+html.light .bb-type-badge-neutral {
+  background: linear-gradient(135deg, rgba(110, 85, 20, 0.10), rgba(110, 85, 20, 0.03));
+  border-color: var(--bb-border);
+}
+
+/* ── Event action button variants ──────────────────────────────────── */
+.bb-event-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  transition: background 150ms var(--bb-ease-out),
+              border-color 150ms var(--bb-ease-out),
+              box-shadow 150ms var(--bb-ease-out),
+              transform 100ms var(--bb-ease-out);
+}
+/* Mobile: bump approval / inbox action buttons to the 44px touch-target
+   minimum and make them span the full card width so tapping is easy. */
+@media (max-width: 767px) {
+  .bb-event-action {
+    min-height: 44px;
+    padding: 0.625rem 1rem;
+    font-size: 0.8125rem;
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
+.bb-event-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Primary — gold gradient with inner top highlight */
+.bb-event-action-primary {
+  background: linear-gradient(180deg, var(--bb-gold-light) 0%, var(--bb-gold) 100%);
+  color: var(--bb-bg-deep);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), var(--bb-shadow-xs);
+}
+.bb-event-action-primary:hover:not(:disabled) {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.30), var(--bb-shadow-sm), 0 0 0 3px rgba(201, 168, 76, 0.18);
+}
+.bb-event-action-primary:active:not(:disabled) {
+  transform: translateY(0.5px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), var(--bb-shadow-xs);
+}
+.bb-event-action-primary:focus-visible {
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.30), 0 0 0 3px rgba(201, 168, 76, 0.35);
+}
+
+/* Secondary — ghost with hover bg */
+.bb-event-action-secondary {
+  background: transparent;
+  color: var(--bb-text-secondary);
+  border-color: var(--bb-border);
+}
+.bb-event-action-secondary:hover:not(:disabled) {
+  background: var(--bb-gold-glow-bg);
+  color: var(--bb-text-primary);
+  border-color: var(--bb-border-gold);
+}
+.bb-event-action-secondary:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+.bb-event-action-secondary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.22);
+}
+
+/* Danger — red-tinted */
+.bb-event-action-danger {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.10) 0%, rgba(239, 68, 68, 0.04) 100%);
+  color: var(--bb-danger);
+  border-color: rgba(239, 68, 68, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.bb-event-action-danger:hover:not(:disabled) {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.18) 0%, rgba(239, 68, 68, 0.08) 100%);
+  border-color: rgba(239, 68, 68, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+.bb-event-action-danger:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+.bb-event-action-danger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.28);
+}
+
+/* ── Inbox filter chip ─────────────────────────────────────────────── */
+.bb-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border: 1px solid var(--bb-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  color: var(--bb-text-secondary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: border-color 150ms var(--bb-ease-out),
+              background 150ms var(--bb-ease-out),
+              color 150ms var(--bb-ease-out),
+              transform 150ms var(--bb-ease-out),
+              box-shadow 150ms var(--bb-ease-out);
+}
+@media (hover: none) and (pointer: coarse) {
+  .bb-filter-chip { height: 2.25rem; }
+}
+.bb-filter-chip:hover {
+  border-color: var(--bb-border-gold);
+  color: var(--bb-text-primary);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), var(--bb-shadow-sm);
+}
+html.light .bb-filter-chip {
+  background: linear-gradient(180deg, rgba(155, 127, 36, 0.05) 0%, rgba(155, 127, 36, 0.01) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.bb-filter-chip-active {
+  background: linear-gradient(180deg, rgba(201, 168, 76, 0.18) 0%, rgba(201, 168, 76, 0.06) 100%);
+  border-color: rgba(201, 168, 76, 0.45);
+  color: var(--bb-gold);
+}
+html.light .bb-filter-chip-active {
+  background: linear-gradient(180deg, rgba(155, 127, 36, 0.18) 0%, rgba(155, 127, 36, 0.06) 100%);
+  border-color: rgba(155, 127, 36, 0.50);
+}
+
+/* ── Inbox tab — gradient underline ────────────────────────────────── */
+.bb-tab-underline {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--bb-gold) 20%, var(--bb-gold) 80%, transparent 100%);
+  transition: opacity 180ms var(--bb-ease-out);
+}
+
+/* ── Inbox empty state ─────────────────────────────────────────────── */
+.bb-empty-icon {
+  animation: bb-empty-breathe 3s ease-in-out infinite;
+}
+.bb-empty-stagger > * {
+  opacity: 0;
+  animation: bb-empty-fade 400ms var(--bb-ease-out) both;
+}
+.bb-empty-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.bb-empty-stagger > *:nth-child(2) { animation-delay: 80ms; }
+.bb-empty-stagger > *:nth-child(3) { animation-delay: 160ms; }
+.bb-empty-stagger > *:nth-child(4) { animation-delay: 240ms; }
+
+/* ── Event card entrance stagger (80ms) ────────────────────────────── */
+.bb-event-stagger > * {
+  opacity: 0;
+  animation: bb-division-fade-up 280ms var(--bb-ease-out) both;
+}
+.bb-event-stagger > *:nth-child(1)  { animation-delay: 0ms; }
+.bb-event-stagger > *:nth-child(2)  { animation-delay: 80ms; }
+.bb-event-stagger > *:nth-child(3)  { animation-delay: 160ms; }
+.bb-event-stagger > *:nth-child(4)  { animation-delay: 240ms; }
+.bb-event-stagger > *:nth-child(5)  { animation-delay: 320ms; }
+.bb-event-stagger > *:nth-child(6)  { animation-delay: 400ms; }
+.bb-event-stagger > *:nth-child(7)  { animation-delay: 480ms; }
+.bb-event-stagger > *:nth-child(8)  { animation-delay: 560ms; }
+.bb-event-stagger > *:nth-child(9)  { animation-delay: 640ms; }
+.bb-event-stagger > *:nth-child(10) { animation-delay: 720ms; }
+
+/* ── Agent avatar — division-color drop shadow on card hover ───────── */
+.bb-agent-glow-gold    .bb-avatar-icon { transition: filter 150ms var(--bb-ease-out); }
+.bb-agent-glow-gold:hover    .bb-avatar-icon { filter: drop-shadow(0 0 4px rgba(201, 168, 76, 0.55)); }
+.bb-agent-glow-blue    .bb-avatar-icon { transition: filter 150ms var(--bb-ease-out); }
+.bb-agent-glow-blue:hover    .bb-avatar-icon { filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.55)); }
+.bb-agent-glow-purple  .bb-avatar-icon { transition: filter 150ms var(--bb-ease-out); }
+.bb-agent-glow-purple:hover  .bb-avatar-icon { filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.55)); }
+.bb-agent-glow-emerald .bb-avatar-icon { transition: filter 150ms var(--bb-ease-out); }
+.bb-agent-glow-emerald:hover .bb-avatar-icon { filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.55)); }
+.bb-agent-glow-neutral .bb-avatar-icon { transition: filter 150ms var(--bb-ease-out); }
+.bb-agent-glow-neutral:hover .bb-avatar-icon { filter: drop-shadow(0 0 4px rgba(232, 232, 237, 0.35)); }
+
+/* ── Status dot — working-state soft pulse ─────────────────────────── */
+.bb-status-dot-working {
+  animation: bb-status-pulse 2s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   LUXURY CHROME — shared polish for modals, banners, sidebar, tab bars
+   Surface-only. No layout shifts. Respects light/dark + reduced motion.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Modal backdrop — faint gold radial wash over the black/60.
+   NOTE: do NOT set `position: relative` here — the component applies
+   Tailwind's `fixed inset-0` and a stronger-specificity override would
+   collapse the overlay into inline flow and displace the whole app. The
+   pseudo-element is positioned absolutely relative to the backdrop's
+   existing fixed box; no positioning change needed on the root. */
+.bb-modal-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(201, 168, 76, 0.03) 0%, transparent 60%);
+}
+html.light .bb-modal-backdrop::after {
+  background: radial-gradient(circle at 50% 50%, rgba(155, 127, 36, 0.05) 0%, transparent 60%);
+}
+
+/* ── Modal panel — canonical luxury panel for every modal ──────── */
+.bb-modal-panel {
+  background: var(--bb-modal-bg);
+  border: 1px solid rgba(201, 168, 76, 0.10);
+  box-shadow: var(--bb-shadow-xl);
+  position: relative;
+}
+.bb-modal-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+html.light .bb-modal-panel {
+  background: var(--bb-modal-bg);
+  border: 1px solid rgba(155, 127, 36, 0.14);
+  box-shadow: var(--bb-shadow-xl);
+}
+html.light .bb-modal-panel::before {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* ── Modal entrance — scale 0.96→1 + fade ──────────────────────── */
+@keyframes bb-modal-panel-enter-kf {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes bb-modal-backdrop-enter-kf {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.bb-modal-enter {
+  animation: bb-modal-panel-enter-kf 200ms var(--bb-ease-out) both;
+}
+.bb-modal-backdrop-enter {
+  animation: bb-modal-backdrop-enter-kf 200ms var(--bb-ease-out) both;
+}
+
+/* ── Modal header / footer dividers — gold-tint, fade to transparent ── */
+.bb-modal-divider-top {
+  position: relative;
+}
+.bb-modal-divider-top::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, rgba(201, 168, 76, 0.14) 20%, rgba(201, 168, 76, 0.14) 80%, transparent 100%);
+}
+html.light .bb-modal-divider-top::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(155, 127, 36, 0.22) 20%, rgba(155, 127, 36, 0.22) 80%, transparent 100%);
+}
+.bb-modal-divider-bottom {
+  position: relative;
+}
+.bb-modal-divider-bottom::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, rgba(201, 168, 76, 0.14) 20%, rgba(201, 168, 76, 0.14) 80%, transparent 100%);
+}
+html.light .bb-modal-divider-bottom::before {
+  background: linear-gradient(90deg, transparent 0%, rgba(155, 127, 36, 0.22) 20%, rgba(155, 127, 36, 0.22) 80%, transparent 100%);
+}
+
+/* ── Modal close button — 32px circle, inner highlight, rotates on hover */
+.bb-modal-close {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: var(--bb-text-muted);
+  background: transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition:
+    color 150ms var(--bb-ease-out),
+    background-color 150ms var(--bb-ease-out),
+    transform 150ms var(--bb-ease-out);
+}
+.bb-modal-close:hover {
+  color: var(--bb-text-primary);
+  background: rgba(255, 255, 255, 0.04);
+  transform: rotate(90deg);
+}
+html.light .bb-modal-close {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+html.light .bb-modal-close:hover {
+  background: rgba(155, 127, 36, 0.08);
+}
+@media (prefers-reduced-motion: reduce) {
+  .bb-modal-close:hover { transform: none; }
+}
+
+/* ── Luxury input — applied via className or inherited ──────────── */
+.bb-luxury-input-v2 {
+  background: rgba(45, 45, 58, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--bb-text-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition:
+    border-color 150ms var(--bb-ease-out),
+    background-color 150ms var(--bb-ease-out),
+    box-shadow 150ms var(--bb-ease-out);
+}
+.bb-luxury-input-v2:hover {
+  border-color: rgba(201, 168, 76, 0.22);
+  background: rgba(45, 45, 58, 0.75);
+}
+.bb-luxury-input-v2:focus,
+.bb-luxury-input-v2:focus-visible {
+  border-color: rgba(201, 168, 76, 0.60);
+  box-shadow: var(--bb-shadow-md), 0 0 0 3px rgba(201, 168, 76, 0.15);
+  outline: none;
+}
+html.light .bb-luxury-input-v2 {
+  background: rgba(253, 251, 245, 0.85);
+  border: 1px solid rgba(110, 85, 20, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+html.light .bb-luxury-input-v2:hover {
+  border-color: rgba(155, 127, 36, 0.32);
+  background: rgba(253, 251, 245, 1);
+}
+html.light .bb-luxury-input-v2:focus,
+html.light .bb-luxury-input-v2:focus-visible {
+  border-color: rgba(155, 127, 36, 0.65);
+  box-shadow: var(--bb-shadow-md), 0 0 0 3px rgba(155, 127, 36, 0.18);
+}
+
+/* Upgrade the legacy .bb-luxury-input alias too */
+.bb-luxury-input {
+  background: rgba(45, 45, 58, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition:
+    border-color 150ms var(--bb-ease-out),
+    background-color 150ms var(--bb-ease-out),
+    box-shadow 150ms var(--bb-ease-out);
+}
+.bb-luxury-input:hover {
+  border-color: rgba(201, 168, 76, 0.22) !important;
+  background: rgba(45, 45, 58, 0.75) !important;
+}
+.bb-luxury-input:focus,
+.bb-luxury-input:focus-visible {
+  border-color: rgba(201, 168, 76, 0.60) !important;
+  box-shadow: var(--bb-shadow-md), 0 0 0 3px rgba(201, 168, 76, 0.15) !important;
+  outline: none !important;
+}
+html.light .bb-luxury-input {
+  background: rgba(253, 251, 245, 0.85) !important;
+  border: 1px solid rgba(110, 85, 20, 0.18) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* ── Sidebar nav item — hover sweep via pseudo-element ─────────── */
+.bb-sidebar-nav-item {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.bb-sidebar-nav-item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0%, transparent 80%);
+  opacity: 0;
+  transition: opacity 180ms var(--bb-ease-out);
+  pointer-events: none;
+  z-index: -1;
+}
+.bb-sidebar-nav-item:hover::before {
+  opacity: 1;
+}
+html.light .bb-sidebar-nav-item::before {
+  background: linear-gradient(90deg, rgba(155, 127, 36, 0.06) 0%, transparent 80%);
+}
+
+/* Active nav — 2px gold hairline on left + fade gradient */
+.bb-sidebar-nav-active {
+  position: relative;
+  background: linear-gradient(90deg, var(--bb-gold-glow-bg) 0%, transparent 100%) !important;
+  color: var(--bb-gold) !important;
+}
+.bb-sidebar-nav-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--bb-gold);
+  border-radius: 0 2px 2px 0;
+  pointer-events: none;
+}
+
+/* ── Top banner shared polish — inner highlight + slide-in entry ── */
+.bb-banner-base {
+  position: relative;
+  box-shadow: var(--bb-shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  animation: bb-banner-slide-in 200ms var(--bb-ease-out) both;
+}
+html.light .bb-banner-base {
+  box-shadow: var(--bb-shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+@keyframes bb-banner-slide-in {
+  from { opacity: 0; transform: translateY(-100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bb-banner-base { animation: none !important; }
+}
+
+.bb-banner-amber {
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.14) 0%, rgba(245, 158, 11, 0.08) 100%) !important;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.25) !important;
+}
+html.light .bb-banner-amber {
+  background: linear-gradient(180deg, rgba(180, 83, 9, 0.12) 0%, rgba(180, 83, 9, 0.06) 100%) !important;
+  border-bottom: 1px solid rgba(180, 83, 9, 0.30) !important;
+}
+
+.bb-banner-danger {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.14) 0%, rgba(239, 68, 68, 0.08) 100%) !important;
+  border-bottom: 1px solid rgba(239, 68, 68, 0.25) !important;
+}
+html.light .bb-banner-danger {
+  background: linear-gradient(180deg, rgba(185, 28, 28, 0.10) 0%, rgba(185, 28, 28, 0.05) 100%) !important;
+  border-bottom: 1px solid rgba(185, 28, 28, 0.28) !important;
+}
+
+.bb-banner-emerald {
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.14) 0%, rgba(16, 185, 129, 0.08) 100%) !important;
+  border-bottom: 1px solid rgba(16, 185, 129, 0.25) !important;
+}
+html.light .bb-banner-emerald {
+  background: linear-gradient(180deg, rgba(4, 120, 87, 0.10) 0%, rgba(4, 120, 87, 0.05) 100%) !important;
+  border-bottom: 1px solid rgba(4, 120, 87, 0.30) !important;
+}
+
+/* ── Tab bar — animated gradient underline ─────────────────────── */
+.bb-tab-underline {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, var(--bb-gold) 20%, var(--bb-gold) 80%, transparent 100%);
+  transition:
+    left 180ms var(--bb-ease-out),
+    right 180ms var(--bb-ease-out),
+    opacity 180ms var(--bb-ease-out);
+}
+
+/* Tab count pill — subtle gradient + inner-top-highlight */
+.bb-tab-count-pill {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid var(--bb-chip-border);
+  color: var(--bb-chip-text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+html.light .bb-tab-count-pill {
+  background: linear-gradient(180deg, rgba(155, 127, 36, 0.10) 0%, rgba(155, 127, 36, 0.04) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* ── GoldButton polish — gradient + inner highlight + brighten hover ── */
+.bb-gold-btn {
+  position: relative;
+  /* 44px touch-target floor (mobile min) + flex centering so the taller
+     box keeps the label vertically centered. Applies app-wide. */
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(212, 182, 92, 1) 0%, var(--bb-gold) 100%);
+  color: var(--bb-bg-deep);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    var(--bb-shadow-sm);
+  transition:
+    filter 150ms var(--bb-ease-out),
+    transform 150ms var(--bb-ease-out),
+    box-shadow 150ms var(--bb-ease-out);
+}
+.bb-gold-btn:hover:not(:disabled) {
+  filter: brightness(1.08) saturate(1.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    var(--bb-shadow-md);
+}
+.bb-gold-btn:active:not(:disabled) {
+  transform: scale(0.96);
+  background: linear-gradient(180deg, var(--bb-gold) 0%, var(--bb-gold-dim) 100%);
+}
+.bb-gold-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    var(--bb-shadow-md),
+    0 0 0 2px var(--bb-bg-deep),
+    0 0 0 4px rgba(201, 168, 76, 0.40);
+}
+.bb-gold-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+html.light .bb-gold-btn {
+  background: linear-gradient(180deg, #B89530 0%, var(--bb-gold) 100%);
+  color: #FFFDF7;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    var(--bb-shadow-sm);
+}
+html.light .bb-gold-btn:focus-visible {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    var(--bb-shadow-md),
+    0 0 0 2px var(--bb-bg-deep),
+    0 0 0 4px rgba(155, 127, 36, 0.50);
+}
+
+/* ── Skeleton — textured gradient + proper easing ──────────────── */
+.skeleton-shimmer {
+  animation-timing-function: var(--bb-ease-in-out) !important;
+  animation-duration: 1.8s !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   KNOWLEDGE TABS — active underline with gold gradient fading at edges.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bb-knowledge-tab {
+  position: relative;
+  transition:
+    color 180ms var(--bb-ease-out),
+    background-color 180ms var(--bb-ease-out);
+}
+.bb-knowledge-tab:hover:not([aria-selected="true"]) {
+  background-color: color-mix(in srgb, var(--bb-bg-elevated) 30%, transparent);
+}
+.bb-knowledge-tab::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: -1px;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--bb-gold) 50%,
+    transparent 100%
+  );
+  opacity: 0;
+  transform: scaleX(0.6);
+  transition:
+    opacity 180ms var(--bb-ease-out),
+    transform 180ms var(--bb-ease-out);
+  pointer-events: none;
+}
+.bb-knowledge-tab[aria-selected="true"]::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   TYPE-TINTED CHIP — filter chips / type badges with gradient fill.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bb-type-chip {
+  position: relative;
+  transition:
+    transform 180ms var(--bb-ease-out),
+    border-color 180ms var(--bb-ease-out),
+    background 180ms var(--bb-ease-out);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+html.light .bb-type-chip {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.bb-type-chip:hover {
+  transform: translateY(-1px);
+}
+.bb-type-chip-inactive {
+  background: linear-gradient(
+    180deg,
+    var(--bb-bg-elevated) 0%,
+    color-mix(in srgb, var(--bb-bg-elevated) 60%, transparent) 100%
+  );
+}
+.bb-type-chip-active-gold {
+  background: linear-gradient(
+    180deg,
+    rgba(201, 168, 76, 0.22) 0%,
+    rgba(201, 168, 76, 0.10) 100%
+  );
+  border-color: rgba(201, 168, 76, 0.45) !important;
+}
+.bb-type-chip-active-emerald {
+  background: linear-gradient(
+    180deg,
+    rgba(16, 185, 129, 0.22) 0%,
+    rgba(16, 185, 129, 0.08) 100%
+  );
+  border-color: rgba(16, 185, 129, 0.45) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 0 1px rgba(201, 168, 76, 0.06);
+}
+.bb-type-chip-active-blue {
+  background: linear-gradient(
+    180deg,
+    rgba(59, 130, 246, 0.22) 0%,
+    rgba(59, 130, 246, 0.08) 100%
+  );
+  border-color: rgba(59, 130, 246, 0.45) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 0 1px rgba(201, 168, 76, 0.06);
+}
+.bb-type-chip-active-amber {
+  background: linear-gradient(
+    180deg,
+    rgba(245, 158, 11, 0.22) 0%,
+    rgba(245, 158, 11, 0.08) 100%
+  );
+  border-color: rgba(245, 158, 11, 0.45) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 0 1px rgba(201, 168, 76, 0.06);
+}
+.bb-type-chip-active-purple {
+  background: linear-gradient(
+    180deg,
+    rgba(139, 92, 246, 0.22) 0%,
+    rgba(139, 92, 246, 0.08) 100%
+  );
+  border-color: rgba(139, 92, 246, 0.45) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 0 1px rgba(201, 168, 76, 0.06);
+}
+.bb-type-chip-active-muted {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+html.light .bb-type-chip-active-gold {
+  background: linear-gradient(
+    180deg,
+    rgba(155, 127, 36, 0.22) 0%,
+    rgba(155, 127, 36, 0.08) 100%
+  );
+  border-color: rgba(155, 127, 36, 0.45) !important;
+}
+html.light .bb-type-chip-active-emerald {
+  background: linear-gradient(
+    180deg,
+    rgba(4, 120, 87, 0.20) 0%,
+    rgba(4, 120, 87, 0.08) 100%
+  );
+  border-color: rgba(4, 120, 87, 0.42) !important;
+}
+html.light .bb-type-chip-active-blue {
+  background: linear-gradient(
+    180deg,
+    rgba(29, 78, 216, 0.18) 0%,
+    rgba(29, 78, 216, 0.08) 100%
+  );
+  border-color: rgba(29, 78, 216, 0.40) !important;
+}
+html.light .bb-type-chip-active-amber {
+  background: linear-gradient(
+    180deg,
+    rgba(180, 83, 9, 0.20) 0%,
+    rgba(180, 83, 9, 0.08) 100%
+  );
+  border-color: rgba(180, 83, 9, 0.42) !important;
+}
+html.light .bb-type-chip-active-purple {
+  background: linear-gradient(
+    180deg,
+    rgba(109, 40, 217, 0.18) 0%,
+    rgba(109, 40, 217, 0.08) 100%
+  );
+  border-color: rgba(109, 40, 217, 0.40) !important;
+}
+html.light .bb-type-chip-active-muted {
+  background: linear-gradient(
+    180deg,
+    rgba(110, 85, 20, 0.14) 0%,
+    rgba(110, 85, 20, 0.05) 100%
+  );
+  border-color: rgba(110, 85, 20, 0.30) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ENTITY ROW — left-edge type-color hairline that appears on hover.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bb-entity-row {
+  position: relative;
+  transition:
+    background-color 160ms var(--bb-ease-out),
+    color 160ms var(--bb-ease-out);
+}
+.bb-entity-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--bb-row-accent, var(--bb-gold));
+  opacity: 0;
+  transition: opacity 160ms var(--bb-ease-out);
+  pointer-events: none;
+}
+.bb-entity-row:hover::before {
+  opacity: 0.55;
+}
+.bb-entity-row[data-selected="true"]::before {
+  opacity: 1;
+}
+
+.bb-observation-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  background: var(--bb-gold);
+  box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.12);
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+html.light .bb-observation-dot {
+  box-shadow: 0 0 0 2px rgba(155, 127, 36, 0.16);
+}
+
+.bb-relation-row {
+  position: relative;
+  border-radius: 8px;
+  padding: 6px 10px;
+  transition: background-color 160ms var(--bb-ease-out);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+html.light .bb-relation-row {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.bb-relation-row:hover {
+  background-color: color-mix(in srgb, var(--bb-bg-elevated) 45%, transparent);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   LESSON CARD — tinted gradient surface for worked / failed lessons.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bb-lesson-card-worked {
+  background: linear-gradient(
+    180deg,
+    rgba(16, 185, 129, 0.06) 0%,
+    var(--bb-bg-elevated) 100%
+  );
+  border: 1px solid rgba(16, 185, 129, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.25);
+  transition:
+    border-color 180ms var(--bb-ease-out),
+    box-shadow 180ms var(--bb-ease-out),
+    transform 180ms var(--bb-ease-out);
+}
+.bb-lesson-card-worked:hover {
+  border-color: rgba(16, 185, 129, 0.38);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 4px 10px rgba(0, 0, 0, 0.3);
+}
+.bb-lesson-card-failed {
+  background: linear-gradient(
+    180deg,
+    rgba(239, 68, 68, 0.06) 0%,
+    var(--bb-bg-elevated) 100%
+  );
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.25);
+  transition:
+    border-color 180ms var(--bb-ease-out),
+    box-shadow 180ms var(--bb-ease-out),
+    transform 180ms var(--bb-ease-out);
+}
+.bb-lesson-card-failed:hover {
+  border-color: rgba(239, 68, 68, 0.38);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 4px 10px rgba(0, 0, 0, 0.3);
+}
+html.light .bb-lesson-card-worked {
+  background: linear-gradient(
+    180deg,
+    rgba(4, 120, 87, 0.08) 0%,
+    #FFFDF7 100%
+  );
+  border: 1px solid rgba(4, 120, 87, 0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 1px 2px rgba(110, 85, 20, 0.06);
+}
+html.light .bb-lesson-card-worked:hover {
+  border-color: rgba(4, 120, 87, 0.40);
+}
+html.light .bb-lesson-card-failed {
+  background: linear-gradient(
+    180deg,
+    rgba(185, 28, 28, 0.08) 0%,
+    #FFFDF7 100%
+  );
+  border: 1px solid rgba(185, 28, 28, 0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 1px 2px rgba(110, 85, 20, 0.06);
+}
+html.light .bb-lesson-card-failed:hover {
+  border-color: rgba(185, 28, 28, 0.40);
+}
+
+.bb-lesson-pill-worked {
+  background: linear-gradient(
+    180deg,
+    rgba(16, 185, 129, 0.20) 0%,
+    rgba(16, 185, 129, 0.08) 100%
+  );
+  color: var(--bb-emerald);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.bb-lesson-pill-failed {
+  background: linear-gradient(
+    180deg,
+    rgba(239, 68, 68, 0.20) 0%,
+    rgba(239, 68, 68, 0.08) 100%
+  );
+  color: var(--bb-danger);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+html.light .bb-lesson-pill-worked {
+  background: linear-gradient(
+    180deg,
+    rgba(4, 120, 87, 0.16) 0%,
+    rgba(4, 120, 87, 0.08) 100%
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+html.light .bb-lesson-pill-failed {
+  background: linear-gradient(
+    180deg,
+    rgba(185, 28, 28, 0.16) 0%,
+    rgba(185, 28, 28, 0.08) 100%
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ACCOUNT NAV — left-edge hairline that paints in when active.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bb-account-nav-item {
+  position: relative;
+  transition:
+    color 180ms var(--bb-ease-out),
+    background-color 180ms var(--bb-ease-out);
+}
+.bb-account-nav-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--bb-nav-accent, var(--bb-gold));
+  transform: scaleY(0);
+  transform-origin: center;
+  opacity: 0;
+  transition:
+    transform 180ms var(--bb-ease-out),
+    opacity 180ms var(--bb-ease-out);
+  pointer-events: none;
+}
+.bb-account-nav-item[data-active="true"]::before {
+  transform: scaleY(1);
+  opacity: 1;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   GHOST BUTTON (upgraded) — subtle border, hover lift + gold edge.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bb-ghost-btn {
+  position: relative;
+  /* 44px touch-target floor (mobile min). Applies app-wide. */
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--bb-border);
+  background: transparent;
+  color: var(--bb-text-primary);
+  transition:
+    border-color 160ms var(--bb-ease-out),
+    background-color 160ms var(--bb-ease-out),
+    box-shadow 160ms var(--bb-ease-out),
+    transform 100ms var(--bb-ease-out),
+    color 160ms var(--bb-ease-out);
+}
+.bb-ghost-btn:hover:not(:disabled) {
+  border-color: var(--bb-border-gold);
+  background-color: color-mix(in srgb, var(--bb-bg-elevated) 30%, transparent);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+html.light .bb-ghost-btn:hover:not(:disabled) {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.bb-ghost-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.bb-ghost-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--bb-gold-glow-bg);
+  border-color: var(--bb-gold-dim);
+}
+.bb-ghost-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.bb-ghost-btn-danger {
+  border-color: color-mix(in srgb, var(--bb-danger) 30%, transparent);
+  color: var(--bb-danger);
+}
+.bb-ghost-btn-danger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--bb-danger) 55%, transparent);
+  background-color: color-mix(in srgb, var(--bb-danger) 10%, transparent);
+}
+.bb-ghost-btn-gold {
+  border-color: color-mix(in srgb, var(--bb-gold) 40%, transparent);
+  color: var(--bb-gold);
+}
+.bb-ghost-btn-gold:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--bb-gold) 65%, transparent);
+  background-color: color-mix(in srgb, var(--bb-gold) 12%, transparent);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   LEGAL LINK CARD — compact luxury card with chevron.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bb-legal-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(180deg, var(--bb-bg-elevated) 0%, rgba(36, 36, 46, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    var(--bb-shadow-xs);
+  color: var(--bb-text-primary);
+  cursor: pointer;
+  transition:
+    transform 180ms var(--bb-ease-out),
+    border-color 180ms var(--bb-ease-out),
+    box-shadow 180ms var(--bb-ease-out);
+  text-align: left;
+  width: 100%;
+}
+html.light .bb-legal-card {
+  background: linear-gradient(180deg, #FFFDF7 0%, #F6F0DF 100%);
+  border: 1px solid rgba(110, 85, 20, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    var(--bb-shadow-xs);
+}
+.bb-legal-card:hover {
+  border-color: rgba(201, 168, 76, 0.24);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    var(--bb-shadow-sm);
+}
+.bb-legal-card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--bb-gold-glow-bg);
+  border-color: var(--bb-gold-dim);
+}
+.bb-legal-card-chevron {
+  color: var(--bb-text-muted);
+  transition:
+    transform 180ms var(--bb-ease-out),
+    color 180ms var(--bb-ease-out);
+}
+.bb-legal-card:hover .bb-legal-card-chevron {
+  color: var(--bb-gold);
+  transform: translateX(2px);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   BETA BADGE — gold gradient with inner highlight.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bb-beta-badge {
+  background: linear-gradient(
+    180deg,
+    rgba(201, 168, 76, 0.18) 0%,
+    rgba(201, 168, 76, 0.06) 100%
+  );
+  border: 1px solid rgba(201, 168, 76, 0.45);
+  color: var(--bb-gold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+html.light .bb-beta-badge {
+  background: linear-gradient(
+    180deg,
+    rgba(155, 127, 36, 0.18) 0%,
+    rgba(155, 127, 36, 0.06) 100%
+  );
+  border: 1px solid rgba(155, 127, 36, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SAFETY / CIRCUIT-BREAKER ROW — hover bg + danger left-edge hairline.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bb-safety-row {
+  position: relative;
+  transition:
+    background-color 160ms var(--bb-ease-out),
+    border-color 160ms var(--bb-ease-out);
+}
+.bb-safety-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--bb-danger);
+  opacity: 0;
+  transition: opacity 160ms var(--bb-ease-out);
+}
+.bb-safety-row:hover {
+  background-color: color-mix(in srgb, var(--bb-bg-elevated) 50%, transparent);
+}
+.bb-safety-row:hover::before {
+  opacity: 0.75;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ROW MOUNT STAGGER — entity rows, first 8 cascade in.
+   ══════════════════════════════════════════════════════════════════════ */
+
+@keyframes bb-row-stagger-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+.bb-row-stagger > *:nth-child(-n+8) {
+  animation: bb-row-stagger-in 260ms var(--bb-ease-out) both;
+}
+.bb-row-stagger > *:nth-child(1) { animation-delay: 0ms;   }
+.bb-row-stagger > *:nth-child(2) { animation-delay: 50ms;  }
+.bb-row-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.bb-row-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.bb-row-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.bb-row-stagger > *:nth-child(6) { animation-delay: 250ms; }
+.bb-row-stagger > *:nth-child(7) { animation-delay: 300ms; }
+.bb-row-stagger > *:nth-child(8) { animation-delay: 350ms; }
+@media (prefers-reduced-motion: reduce) {
+  .bb-row-stagger > *:nth-child(-n+8) {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   REDUCED MOTION
+   ══════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  .bb-view-transition {
+    transition: none !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   WELCOME (auth page) — scene backdrop + sign-in card treatment.
+   Uses the same gold-wash language as the Splash so the experience is
+   continuous from app-launch through sign-in.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Welcome / auth / acknowledgement scenes ALWAYS render dark regardless
+   of the app's active theme — these are the product's "entry hall" and
+   should feel consistent every time. The scene matches the real app's
+   dark-mode body background exactly (same radial washes + linear
+   gradient) so the page reads as "the app, without chrome." In dark
+   mode the body already provides this bg; in light mode we force it. */
+.bb-welcome-scene {
+  color: #E8E8ED;
+}
+.bb-welcome-scene * {
+  color-scheme: dark;
+}
+html.light .bb-welcome-scene {
+  background:
+    radial-gradient(ellipse 70% 55% at 12% 8%, rgba(201,168,76,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 88% 92%, rgba(201,168,76,0.05) 0%, transparent 60%),
+    linear-gradient(160deg, #1A1A24 0%, #22222D 100%) !important;
+}
+
+.bb-welcome-card {
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.04) inset,
+    0 2px 6px rgba(0,0,0,0.5),
+    0 18px 48px rgba(0,0,0,0.5),
+    0 0 0 1px rgba(201,168,76,0.06) inset;
+}
+
+/* Force children of the welcome scene to use dark-mode card treatment
+   even when the app's theme is set to light, so auth pages are a
+   consistent entry experience. */
+html.light .bb-welcome-scene .bb-luxury-card {
+  background: linear-gradient(180deg, #2D2D3A 0%, rgba(36, 36, 46, 0.85) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #E8E8ED !important;
+}
+html.light .bb-welcome-scene .bb-luxury-card::before {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+html.light .bb-welcome-scene .bb-welcome-card {
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.04) inset,
+    0 2px 6px rgba(0,0,0,0.5),
+    0 18px 48px rgba(0,0,0,0.5),
+    0 0 0 1px rgba(201,168,76,0.06) inset !important;
+}
+
+/* Splash / loading scene — always dark regardless of app theme, with the
+   same hex-grid texture behind it for continuity with the rest of the app.
+   Splash is a fixed overlay (z-100), so it needs to paint its own dark
+   base + grid because the body's `::after` texture sits below `#root`. */
+.bb-splash-scene {
+  color: #E8E8ED;
+  background:
+    radial-gradient(ellipse 70% 55% at 12% 8%, rgba(201,168,76,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 88% 92%, rgba(201,168,76,0.05) 0%, transparent 60%),
+    linear-gradient(160deg, #1A1A24 0%, #22222D 100%);
+}
+.bb-splash-scene * {
+  color-scheme: dark;
+}
+.bb-splash-scene::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-repeat: repeat;
+  background-position: center;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='72' height='124.7' viewBox='0 0 72 124.7'><g fill='none' stroke='%23c9a84c' stroke-width='0.8' stroke-opacity='0.055'><path d='M36 0 L72 20.8 L72 62.35 L36 83.15 L0 62.35 L0 20.8 Z'/><path d='M36 83.15 L72 103.95 L72 124.7'/><path d='M36 83.15 L0 103.95 L0 124.7'/><path d='M72 0 L72 20.8'/><path d='M0 0 L0 20.8'/></g></svg>");
+  background-size: 72px 124.7px;
+  mask-image: radial-gradient(ellipse 120% 100% at 50% 50%, black 30%, rgba(0,0,0,0.5) 80%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 120% 100% at 50% 50%, black 30%, rgba(0,0,0,0.5) 80%, transparent 100%);
+}
+html.light .bb-splash-scene .text-bb-text-muted {
+  color: rgba(232, 232, 237, 0.55) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   REACT FLOW EDGES — global visibility escape hatch (kickoff hotfix)
+   `var(--bb-text-primary)` was resolving empty inside React Flow's SVG
+   cascade, leaving edges invisible. This brute-force override forces
+   pure white bold strokes + arrowheads on every ReactFlow chart in the
+   app. Belt-and-suspenders pair with `defaultEdgeOptions` in
+   ReactFlowDiagram.tsx and per-edge `style` props in client modules.
+   ══════════════════════════════════════════════════════════════════════ */
+.react-flow__edge-path,
+.react-flow__edge .react-flow__edge-path,
+.react-flow__connection-path {
+  stroke: #FFFFFF !important;
+  stroke-width: 3.5 !important;
+}
+.react-flow__arrowhead,
+.react-flow__edge marker path,
+.react-flow__edge marker polyline {
+  fill: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   BUSINESS MAP CANVAS (.bb-bmap-canvas) — WS-BMAP 2026-07-11
+   Scoped, theme-aware React Flow styling for views/BusinessMap.tsx.
+   Placed AFTER the global escape hatch above so these rules win inside
+   the Business Map: the hardcoded pure-white 3.5px strokes are unreadable
+   on the light theme and far too heavy for an analyst process map.
+   Literal colors (not var(--bb-text-primary)) because tokens resolve
+   unreliably inside React Flow's SVG cascade — see the hotfix note above.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Edges — quiet by default, dark theme. */
+.bb-bmap-canvas .react-flow__edge-path,
+.bb-bmap-canvas .react-flow__connection-path {
+  stroke: rgba(255, 255, 255, 0.32) !important;
+  stroke-width: 1.5 !important;
+}
+.bb-bmap-canvas .react-flow__arrowhead,
+.bb-bmap-canvas .react-flow__edge marker path,
+.bb-bmap-canvas .react-flow__edge marker polyline {
+  fill: rgba(255, 255, 255, 0.45) !important;
+  stroke: none !important;
+}
+/* Light theme: ink strokes on paper. */
+html.light .bb-bmap-canvas .react-flow__edge-path,
+html.light .bb-bmap-canvas .react-flow__connection-path {
+  stroke: rgba(30, 30, 40, 0.35) !important;
+}
+html.light .bb-bmap-canvas .react-flow__arrowhead,
+html.light .bb-bmap-canvas .react-flow__edge marker path,
+html.light .bb-bmap-canvas .react-flow__edge marker polyline {
+  fill: rgba(30, 30, 40, 0.5) !important;
+}
+/* Selected/hovered edge: the restrained gold accent. */
+.bb-bmap-canvas .react-flow__edge.selected .react-flow__edge-path,
+.bb-bmap-canvas .react-flow__edge:hover .react-flow__edge-path {
+  stroke: var(--bb-gold) !important;
+  stroke-width: 2 !important;
+}
+
+/* Connection handles exist ONLY so edges can anchor to the custom node —
+   the map is read-only, so they must be invisible and non-interactive.
+   (display:none would break React Flow's anchor measurement.) */
+.bb-bmap-canvas .react-flow__handle {
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  min-width: 0;
+  min-height: 0;
+  border: none;
+  pointer-events: none;
+}
+
+/* Lane bands are chrome, not content: clicks and drags pass through to
+   the pane so panning works everywhere on the canvas. */
+.bb-bmap-canvas .react-flow__node-lane {
+  pointer-events: none !important;
+  cursor: default;
+}
+
+/* Keep node cards from flashing the default RF node chrome. */
+.bb-bmap-canvas .react-flow__node-process {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SHARED REACT FLOW DIAGRAM (.bb-reactflow-wrapper) — WS-FINAL-INTEGRATION 2026-07-11
+   Scoped, theme-aware React Flow styling for
+   clientModules/_shared/ReactFlowDiagram.tsx — used by roadmap / overview /
+   proposal_doc / audit_doc / assets client-facing document surfaces.
+   Same fix pattern as `.bb-bmap-canvas` above: placed AFTER the global
+   escape hatch so these rules win here too. Those surfaces render in BOTH
+   themes (unlike the dark-locked main app shell), so the hardcoded
+   pure-white 3.5px strokes were a light-theme landmine — invisible/illegible
+   on a white document background.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bb-reactflow-wrapper .react-flow__edge-path,
+.bb-reactflow-wrapper .react-flow__connection-path {
+  stroke: rgba(255, 255, 255, 0.55) !important;
+  stroke-width: 2 !important;
+}
+.bb-reactflow-wrapper .react-flow__arrowhead,
+.bb-reactflow-wrapper .react-flow__edge marker path,
+.bb-reactflow-wrapper .react-flow__edge marker polyline {
+  fill: rgba(255, 255, 255, 0.7) !important;
+  stroke: none !important;
+}
+html.light .bb-reactflow-wrapper .react-flow__edge-path,
+html.light .bb-reactflow-wrapper .react-flow__connection-path {
+  stroke: rgba(30, 30, 40, 0.5) !important;
+}
+html.light .bb-reactflow-wrapper .react-flow__arrowhead,
+html.light .bb-reactflow-wrapper .react-flow__edge marker path,
+html.light .bb-reactflow-wrapper .react-flow__edge marker polyline {
+  fill: rgba(30, 30, 40, 0.65) !important;
+}
+.bb-reactflow-wrapper .react-flow__edge.selected .react-flow__edge-path,
+.bb-reactflow-wrapper .react-flow__edge:hover .react-flow__edge-path {
+  stroke: var(--bb-gold) !important;
+  stroke-width: 2.5 !important;
+}
+
+/* Connection handles exist ONLY so edges can anchor to the custom node —
+   these diagrams are read-only/display, so anchors must be invisible and
+   non-interactive. (display:none would break React Flow's anchor
+   measurement, same reasoning as `.bb-bmap-canvas` above.) */
+.bb-reactflow-wrapper .react-flow__handle {
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  min-width: 0;
+  min-height: 0;
+  border: none;
+  pointer-events: none;
+}

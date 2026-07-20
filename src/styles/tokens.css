@@ -1,0 +1,289 @@
+/* ── Web4OS design tokens (v3 — monochrome + gold) ──────────────────
+   LCH-inspired warm darks. Single gold accent. Clean semantic palette.
+   ──────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Backgrounds — dark, but not pitch-black. Each tier now sits a few
+     shades lighter so the UI reads as a premium dark theme (Linear /
+     Notion-dark) instead of a black void. */
+  --bb-bg-deep:       #16161F;
+  --bb-bg-surface:    #22222D;
+  --bb-bg-elevated:   #2D2D3A;
+  --bb-bg-overlay:    rgba(22, 22, 31, 0.85);
+
+  /* Text — warm neutrals, never pure white */
+  --bb-text-primary:   #E8E8ED;
+  --bb-text-secondary: #8B8B96;
+  /* ws/chat-polish (2026-07-20, THEME I) — the muted tier was #5A5A65
+     (~2.2:1 on the dark chat surface, below WCAG AA). Lifted to #82828F
+     (~4.1:1) so timestamps / captions / secondary chat text stay legible,
+     while still reading as the dimmest of the three text tiers so the
+     approved hierarchy (primary > secondary > muted) is preserved. */
+  --bb-text-muted:     #82828F;
+
+  /* Gold accent — single accent, used sparingly */
+  --bb-gold:           #C9A84C;
+  --bb-gold-light:     #E2C87A;
+  --bb-gold-dim:       #8A7034;
+  --bb-gold-glow:      #E2C87A;  /* bright gold — used in gradients and text across codebase */
+  --bb-gold-glow-bg:   rgba(201, 168, 76, 0.15);  /* subtle bg tint for active states */
+
+  /* Semantic — status only, not decoration */
+  --bb-success:        #10B981;
+  --bb-success-dim:    #059669;
+  --bb-danger:         #EF4444;
+  --bb-danger-dim:     #DC2626;
+  --bb-warning:        #F59E0B;
+  --bb-warning-dim:    #D97706;
+  --bb-info:           #3B82F6;
+  --bb-info-dim:       #2563EB;
+
+  /* Extended palette — warmth and depth */
+  --bb-emerald:        #10B981;
+  --bb-emerald-glow:   rgba(16, 185, 129, 0.15);
+  --bb-blue:           #3B82F6;
+  --bb-blue-glow:      rgba(59, 130, 246, 0.14);
+  --bb-amber:          #F59E0B;
+  --bb-amber-glow:     rgba(245, 158, 11, 0.12);
+  --bb-purple:         #8B5CF6;
+  --bb-purple-glow:    rgba(139, 92, 246, 0.12);
+  /* Soft-tint background for the danger/blocked status pill. The
+     prior status palette used `bg-bb-warning-dim` + `text-bb-warning`,
+     which rendered orange-on-orange (~1.4:1 — well below WCAG AA).
+     The new pill uses this rgba tint over the dark surface so the
+     saturated text reads cleanly. */
+  --bb-danger-glow:    rgba(239, 68, 68, 0.14);
+
+  /* ws/chat-polish (2026-07-20, THEME G) — soft status-tint backgrounds.
+     Several Boardroom cards/pills referenced `bg-bb-warning-bg` /
+     `bg-bb-success-bg` / `bg-bb-error-bg`, none of which existed as
+     tailwind color keys, so they rendered transparent (pills read as
+     unfinished). These give the tints a real, subtle value in both
+     themes; the matching tailwind aliases are added in tailwind.config.js. */
+  --bb-warning-bg:     rgba(245, 158, 11, 0.12);
+  --bb-success-bg:     rgba(16, 185, 129, 0.12);
+  --bb-error-bg:       rgba(239, 68, 68, 0.12);
+
+  /* Borders */
+  --bb-border:         rgba(255, 255, 255, 0.08);
+  --bb-border-gold:    rgba(201, 168, 76, 0.12);
+  --bb-border-emerald: rgba(16, 185, 129, 0.20);
+  --bb-border-blue:    rgba(59, 130, 246, 0.20);
+  --bb-border-amber:   rgba(245, 158, 11, 0.20);
+
+  /* Typography */
+  --font-body: "Inter", system-ui, sans-serif;
+
+  /* Motion */
+  --bb-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --bb-ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --bb-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --bb-dur-fast: 150ms;
+  --bb-dur-medium: 200ms;
+
+  /* ── Shadow ladder — five tiers with a faint gold tint so depth reads
+     as part of the royal-gold identity. Dark mode uses black + inset
+     gold hairlines; light mode uses a warm-brown tint. */
+  --bb-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --bb-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(201, 168, 76, 0.03) inset;
+  --bb-shadow-md: 0 2px 4px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(201, 168, 76, 0.04) inset;
+  --bb-shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.45), 0 16px 40px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --bb-shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.5), 0 24px 64px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 0 0 1px rgba(201, 168, 76, 0.06) inset;
+
+  /* Fourth background tier — sits above elevated. Modal / drawer surface. */
+  --bb-bg-raised:     #34343F;
+
+  /* Card surface tokens — single source of truth for the gradient cards.
+     Defaults are dark mode; light mode redefines below. Every card that
+     reads from these stays in sync with the active theme. */
+  --bb-card-gradient-start:   var(--bb-bg-elevated);
+  --bb-card-gradient-end:     rgba(36, 36, 46, 0.85);
+  --bb-card-shadow:           0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --bb-card-shadow-hover:     0 2px 6px rgba(0, 0, 0, 0.5), 0 16px 40px rgba(0, 0, 0, 0.4);
+  --bb-card-border-highlight: rgba(201, 168, 76, 0.08); /* subtle gold inner hairline */
+
+  /* Chip tokens — compact labels (what's inside, off pill, capability chips).
+     Dark mode needs heavier alpha so chips separate from the card surface;
+     light mode carries the gold family. */
+  --bb-chip-bg:           rgba(255, 255, 255, 0.05);
+  --bb-chip-border:       rgba(255, 255, 255, 0.10);
+  --bb-chip-text:         rgba(235, 225, 200, 0.78);
+  --bb-chip-bg-muted:     rgba(255, 255, 255, 0.03);
+
+  /* Modal panel tokens — panel sits one luminance step above elevated so
+     it clearly separates from the backdrop + any cards behind it. */
+  --bb-modal-bg:     #34343F;
+  --bb-modal-shadow: 0 24px 64px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(201, 168, 76, 0.06) inset;
+
+  /* Icon tile — the gold-icon square on each card. Inset gold hairline
+     lifts it from the card surface in dark mode. */
+  --bb-icon-tile-bg:     var(--bb-bg-surface);
+  --bb-icon-tile-shadow: inset 0 0 0 1px rgba(201, 168, 76, 0.06);
+
+  /* Sidebar bottom — dark mode lands on royal gold. A deep, warm,
+     luxurious gold blended over the near-black surface gives the bottom
+     of the rail a regal depth (not a flashy highlight). Text stays
+     readable because the blend is muted and the top of the gradient is
+     the neutral dark surface. */
+  --bb-sidebar-bottom: rgba(175, 140, 65, 0.30);
+
+  /* ── Legacy aliases (backward compat for files outside the design system) ── */
+  --bb-bg-panel:       var(--bb-bg-elevated);
+  --bb-bg-overlay-legacy: var(--bb-bg-overlay);
+  --bb-text-tertiary:  var(--bb-text-muted);
+  --bb-gold-subtle:    var(--bb-gold-dim);
+  --bb-gold-10:        rgba(201, 168, 76, 0.10);
+  --bb-gold-15:        rgba(201, 168, 76, 0.15);
+  --bb-gold-30:        rgba(201, 168, 76, 0.30);
+  --bb-border-subtle:  var(--bb-border);
+  --bb-ease-ethereal:  var(--bb-ease);
+  --bb-dur-slow:       400ms;
+  --bb-type-hero:      1.5rem;
+  --bb-type-heading:   1.125rem;
+  --bb-type-body:      0.875rem;
+  --bb-type-caption:   0.75rem;
+  --bb-type-micro:     0.625rem;
+  --font-heading:      "Inter", system-ui, sans-serif;
+
+  /* Legacy brand tokens */
+  --color-gold:        var(--bb-gold);
+  --color-gold-light:  var(--bb-gold-light);
+  --color-gold-dark:   var(--bb-gold-dim);
+  --color-bg:          var(--bb-bg-deep);
+  --color-surface:     rgba(255, 255, 255, 0.05);
+  --color-border:      var(--bb-border);
+  --color-text:        var(--bb-text-primary);
+  --color-text-muted:  var(--bb-text-secondary);
+  --glass-bg:          var(--bb-bg-overlay);
+  --glass-border:      var(--bb-border-gold);
+  --glass-blur:        16px;
+  --glass-shadow:      0 4px 16px rgba(0, 0, 0, 0.3);
+  --radius-sm:         4px;
+  --radius-md:         8px;
+  --radius-lg:         16px;
+  --radius-full:       9999px;
+}
+
+/* ── Light mode ─────────────────────────────────────────────────────── */
+/* Warm off-whites, NOT pure white. Gold accent stays the same. */
+
+html.light {
+  /* ── Royal-gold light theme ──────────────────────────────────────────
+     The light theme echoes the brand gold. Backgrounds are warm,
+     cream-adjacent surfaces with a faint gold wash at the extremes
+     (applied via #root in global.css). Text is warm-black, not cool
+     slate, so the whole UI feels like the dark theme's gold mirror. */
+
+  --bb-bg-deep:       #FAF7EF;   /* warm cream base */
+  --bb-bg-surface:    #F1ECDF;   /* soft gold-tinted surface */
+  --bb-bg-elevated:   #FDFBF5;   /* near-white with gold undertone */
+  --bb-bg-overlay:    rgba(250, 247, 239, 0.90);
+
+  /* Text — WCAG AA compliant on the three background tiers.
+     primary   vs elevated (#FDFBF5): 17.3:1 (AAA)
+     secondary vs elevated          :  7.4:1 (AAA)
+     muted     vs elevated          :  4.6:1 (AA) */
+  --bb-text-primary:   #1C1811;  /* warm near-black */
+  --bb-text-secondary: #4B4538;  /* warm dark-gray */
+  --bb-text-muted:     #6E6852;  /* warm mid-gray */
+
+  /* Gold — darker for contrast on light backgrounds.
+     #9B7F24 on elevated (#FDFCFA): 4.9:1 (AA for normal text) */
+  --bb-gold:           #9B7F24;
+  --bb-gold-light:     #B89530;
+  --bb-gold-dim:       #705B1C;
+  --bb-gold-glow:      #B89530;
+  --bb-gold-glow-bg:   rgba(155, 127, 36, 0.14);  /* boosted from 0.10 */
+
+  /* Semantic — bumped to accessible contrast against light backgrounds */
+  --bb-success:        #047857;  /* was #059669 */
+  --bb-success-dim:    #065F46;
+  --bb-danger:         #B91C1C;  /* was #DC2626 */
+  --bb-danger-dim:     #991B1B;
+  --bb-warning:        #B45309;  /* was #D97706 — amber-600 fails AA; -700 passes */
+  --bb-warning-dim:    #92400E;
+  --bb-info:           #1D4ED8;  /* was #2563EB */
+  --bb-info-dim:       #1E40AF;
+
+  /* Extended palette — glows boosted 1.3–1.5× for visibility on cream */
+  --bb-emerald:        #047857;
+  --bb-emerald-glow:   rgba(4, 120, 87, 0.16);
+  --bb-blue:           #1D4ED8;
+  --bb-blue-glow:      rgba(29, 78, 216, 0.14);
+  --bb-amber:          #B45309;
+  --bb-amber-glow:     rgba(180, 83, 9, 0.14);
+  --bb-purple:         #6D28D9;
+  --bb-purple-glow:    rgba(109, 40, 217, 0.14);
+  /* Soft red tint for the blocked-status pill in light mode. Pairs
+     with the darkened --bb-danger (#B91C1C) → ~6.5:1 contrast. */
+  --bb-danger-glow:    rgba(185, 28, 28, 0.14);
+
+  /* ws/chat-polish (2026-07-20, THEME G) — light-mode status tints. */
+  --bb-warning-bg:     rgba(180, 83, 9, 0.12);
+  --bb-success-bg:     rgba(4, 120, 87, 0.12);
+  --bb-error-bg:       rgba(185, 28, 28, 0.12);
+
+  /* Borders — subtle warm-gold tint so every card edge sits in the
+     same royal-gold family as the rest of the theme, without being
+     a visible gold stroke. Strength (~0.14) keeps definition crisp
+     on the warm off-white surfaces. */
+  --bb-border:         rgba(110, 85, 20, 0.14);
+  --bb-border-gold:    rgba(155, 127, 36, 0.30);
+  --bb-border-emerald: rgba(4, 120, 87, 0.30);
+  --bb-border-blue:    rgba(29, 78, 216, 0.28);
+  --bb-border-amber:   rgba(180, 83, 9, 0.30);
+
+  /* Shadow ladder — light-mode tint using warm-brown alpha so shadows
+     feel of-a-piece with the cream surfaces (not a cold gray). */
+  --bb-shadow-xs: 0 1px 2px rgba(110, 85, 20, 0.06);
+  --bb-shadow-sm: 0 1px 3px rgba(110, 85, 20, 0.08);
+  --bb-shadow-md: 0 2px 4px rgba(110, 85, 20, 0.08), 0 6px 16px rgba(110, 85, 20, 0.06);
+  --bb-shadow-lg: 0 4px 8px rgba(110, 85, 20, 0.1), 0 16px 40px rgba(110, 85, 20, 0.1), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+  --bb-shadow-xl: 0 8px 16px rgba(110, 85, 20, 0.12), 0 24px 64px rgba(110, 85, 20, 0.14), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+
+  /* Fourth background tier — light-mode raised surface (modal / drawer). */
+  --bb-bg-raised:     #FFFDF7;
+
+  /* Card surface tokens — light-mode overrides. Gradient end carries a
+     warm gold tint so cards sit inside the royal-gold theme. Shadow
+     picks up the same hue for a cohesive sense of depth. */
+  --bb-card-gradient-start:   var(--bb-bg-elevated);
+  --bb-card-gradient-end:     rgba(241, 236, 223, 0.85);
+  --bb-card-shadow:           0 1px 2px rgba(110, 85, 20, 0.06), 0 0 0 1px rgba(110, 85, 20, 0.04) inset;
+  --bb-card-shadow-hover:     0 8px 24px rgba(155, 127, 36, 0.16), 0 0 0 1px rgba(155, 127, 36, 0.10) inset;
+  --bb-card-border-highlight: transparent;
+
+  /* Chip tokens — light-mode carries a soft gold wash. */
+  --bb-chip-bg:           rgba(155, 127, 36, 0.08);
+  --bb-chip-border:       rgba(155, 127, 36, 0.22);
+  --bb-chip-text:         rgba(75, 55, 15, 0.80);
+  --bb-chip-bg-muted:     rgba(155, 127, 36, 0.04);
+
+  /* Modal panel tokens — light-mode keeps the surface + cream. */
+  --bb-modal-bg:     var(--bb-bg-elevated);
+  --bb-modal-shadow: 0 24px 64px rgba(110, 85, 20, 0.14), 0 0 0 1px rgba(110, 85, 20, 0.06) inset;
+
+  /* Icon tile — light mode stays clean. */
+  --bb-icon-tile-bg:     var(--bb-bg-surface);
+  --bb-icon-tile-shadow: inset 0 0 0 1px rgba(155, 127, 36, 0.08);
+
+  /* Sidebar bottom — light mode fades into a richer royal gold. The
+     warmer red-orange push (190, 140, 50) reads as real gold leaf over
+     the cream surface instead of mustard/yellow. Text-bb-text-secondary
+     still clears WCAG AA against the composite. */
+  --bb-sidebar-bottom: rgba(190, 140, 50, 0.38);
+
+  /* Legacy aliases — light mode */
+  --bb-bg-panel:       var(--bb-bg-elevated);
+  --bb-text-tertiary:  var(--bb-text-muted);
+  --bb-gold-subtle:    var(--bb-gold-dim);
+  --bb-border-subtle:  var(--bb-border);
+  --color-bg:          var(--bb-bg-deep);
+  --color-surface:     rgba(0, 0, 0, 0.03);
+  --color-border:      var(--bb-border);
+  --color-text:        var(--bb-text-primary);
+  --color-text-muted:  var(--bb-text-secondary);
+  --glass-bg:          var(--bb-bg-overlay);
+  --glass-border:      var(--bb-border);
+  --glass-shadow:      0 4px 16px rgba(0, 0, 0, 0.08);
+}

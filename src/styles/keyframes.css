@@ -1,0 +1,692 @@
+/* ── Web4OS keyframes (v3 — essentials only) ────────────────────────
+   Less animation = more premium. Keep it short (150ms), not complex.
+   ──────────────────────────────────────────────────────────────────── */
+
+/* Card entrance — subtle fade-in + slight upward shift */
+@keyframes bb-card-arrive {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.bb-card-arrive {
+  animation: bb-card-arrive 150ms var(--bb-ease) both;
+}
+
+/* Pulse — for status dots */
+@keyframes bb-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+.bb-pulse {
+  animation: bb-pulse 2s ease-in-out infinite;
+}
+
+/* Spin — for loading spinners */
+@keyframes bb-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.bb-spin {
+  animation: bb-spin 600ms linear infinite;
+}
+
+/* Skeleton shimmer — gray, not gold */
+@keyframes bb-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Hero headline gold shimmer (Results hero banner, 2026-07-18) ────
+   A slow ease drift across the gold-gradient phrase — "futuristic life"
+   at whisper volume. Deliberately long-period (8s) so it reads as a
+   living material, never a loading shimmer (bb-shimmer above is the
+   fast skeleton sweep). Consumed by .bb-hero-gold-text (global.css),
+   which owns the reduced-motion fallback. */
+@keyframes bb-hero-gold-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Legacy animation aliases (backward compat for files outside design system)
+   These map old animation classes to the minimal set above or no-op.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bb-logo-breathe    { /* removed — no-op */ }
+.bb-breathe         { /* removed — no-op */ }
+.bb-breathe-fast    { /* removed — no-op */ }
+.bb-bloom           { /* removed — no-op */ }
+.bb-mote-drift      { /* removed — no-op */ }
+.bb-amber-pulse     { animation: bb-pulse 2s ease-in-out infinite; }
+.bb-ticker-scroll   { /* removed — no-op */ }
+.bb-credit-flash    { /* removed — no-op */ }
+.bb-ceo-thinking    { animation: bb-pulse 1.4s ease-in-out infinite; }
+.bb-action-flash    { /* removed — no-op */ }
+.bb-card-dismiss    { /* removed — no-op */ }
+.bb-ceo-aura        { /* removed — no-op */ }
+.bb-working-ring    { animation: bb-pulse 2s ease-in-out infinite; }
+.bb-watermark-glow  { /* removed — no-op */ }
+
+/* Legacy priority border styles — simplified to static borders */
+.bb-priority-urgent { border-left: 3px solid var(--bb-gold-light); }
+.bb-priority-high   { border-left: 3px solid var(--bb-gold); }
+.bb-priority-medium { border-left: 3px solid var(--bb-gold-dim); }
+.bb-priority-low    { border-left: 3px solid var(--bb-border); }
+
+/* ── Subtle fade-up for content entering the viewport ──────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fade-up 300ms ease-out forwards;
+}
+
+/* ── Staggered children — each child delays slightly ───────────────── */
+.stagger-children > * {
+  animation: fade-up 300ms ease-out forwards;
+  opacity: 0;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+
+/* ── Gentle glow pulse for active agent indicators ─────────────────── */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(201,168,76,0.3); }
+  50% { box-shadow: 0 0 8px rgba(201,168,76,0.5); }
+}
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Verb fade — Claude-Code-style soft fade between rotating thinking words. */
+@keyframes verb-fade {
+  from { opacity: 0; transform: translateY(2px); filter: blur(2px); }
+  to   { opacity: 1; transform: translateY(0);   filter: blur(0); }
+}
+.animate-verb-fade {
+  animation: verb-fade 260ms var(--bb-ease) both;
+}
+
+/* ── Ambient gradient shift for Welcome screen ─────────────────────── */
+@keyframes ambient-shift {
+  0% { background-position: 50% 40%; }
+  50% { background-position: 52% 42%; }
+  100% { background-position: 50% 40%; }
+}
+
+/* ── Welcome / Splash entrance animations ─────────────────────────── */
+@keyframes welcome-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-welcome-fade-up {
+  animation: welcome-fade-up 600ms ease-out forwards;
+  opacity: 0;
+}
+
+/* Breathing scale for splash logo */
+@keyframes splash-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+.animate-splash-breathe {
+  animation: splash-breathe 3s ease-in-out infinite;
+}
+
+/* Gold shimmer sweep for CTA button */
+@keyframes gold-shimmer-sweep {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Loading bar grow from left to right */
+@keyframes loading-grow {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+/* Simple fade for cycling messages */
+@keyframes message-fade {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ── Card mount — warm entrance for cards across all views ────────── */
+@keyframes bb-card-mount {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.bb-card-mount {
+  animation: bb-card-mount 300ms var(--bb-ease) both;
+}
+
+/* ── Subtle inner glow shift on hover (for hero cards) ───────────── */
+@keyframes bb-inner-glow {
+  0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
+  50% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
+}
+
+/* ── Emerald glow pulse for active/success indicators ─────────────── */
+@keyframes emerald-glow-pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(16, 185, 129, 0.3); }
+  50% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
+}
+.animate-emerald-glow {
+  animation: emerald-glow-pulse 2.5s ease-in-out infinite;
+}
+
+/* ── Gold glow pulse for newly-unlocked capabilities (Phase 34b) ──── */
+@keyframes gold-unlock-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(217, 168, 80, 0.0); }
+  20%  { box-shadow: 0 0 18px 2px rgba(217, 168, 80, 0.55); }
+  100% { box-shadow: 0 0 0 0 rgba(217, 168, 80, 0.0); }
+}
+.animate-gold-unlock {
+  animation: gold-unlock-pulse 1500ms var(--bb-ease) 1;
+}
+
+/* ── Persistent gold aura for connected capability cards on Home ────
+ *
+ * 2026-05-19 — owner asked for the typical Web4OS gold halo on Home
+ * connection cards once the capability is connected, so it reads as a
+ * premium "live and lit up" state instead of just an emerald icon
+ * tucked next to the title. Steady glow + a slow breathing pulse so
+ * the eye picks it up without making the page feel busy. The border
+ * shifts to gold to seal the treatment.
+ */
+@keyframes gold-aura-breathe {
+  0%, 100% { box-shadow: 0 0 18px -2px rgba(217, 168, 80, 0.35), 0 0 0 1px rgba(217, 168, 80, 0.18) inset; }
+  50%      { box-shadow: 0 0 28px -1px rgba(217, 168, 80, 0.55), 0 0 0 1px rgba(217, 168, 80, 0.28) inset; }
+}
+.bb-gold-aura {
+  border-color: rgba(217, 168, 80, 0.45) !important;
+  animation: gold-aura-breathe 4.5s ease-in-out infinite;
+}
+.bb-gold-aura:hover {
+  border-color: rgba(217, 168, 80, 0.65) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bb-gold-aura {
+    animation: none;
+    box-shadow: 0 0 22px -2px rgba(217, 168, 80, 0.45), 0 0 0 1px rgba(217, 168, 80, 0.22) inset;
+  }
+}
+
+/* ── Blue glow pulse for info/working indicators ──────────────────── */
+@keyframes blue-glow-pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(59, 130, 246, 0.3); }
+  50% { box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); }
+}
+.animate-blue-glow {
+  animation: blue-glow-pulse 2s ease-in-out infinite;
+}
+
+/* ── Ambient gradient background drift ────────────────────────────── */
+@keyframes gradient-drift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-gradient-drift {
+  background-size: 200% 200%;
+  animation: gradient-drift 15s ease infinite;
+}
+
+/* ── Soft breathing scale for status indicators ───────────────────── */
+@keyframes soft-breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.8; }
+}
+.animate-soft-breathe {
+  animation: soft-breathe 3s ease-in-out infinite;
+}
+
+/* ── Count up number reveal ───────────────────────────────────────── */
+@keyframes number-reveal {
+  from { opacity: 0; transform: translateY(8px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-number-reveal {
+  animation: number-reveal 400ms var(--bb-ease) both;
+}
+
+/* ── Slide in from left for feed items ────────────────────────────── */
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in {
+  animation: slide-in-left 300ms var(--bb-ease) both;
+}
+
+/* ── Slide in from right — for right-anchored drawers ─────────────── */
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0);    }
+}
+
+/* ── Generic fade-in — used by backdrops / inline popovers ─────────── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 180ms var(--bb-ease-out) both;
+}
+
+/* ── Ring pulse — expanding ring for CEO node ─────────────────────── */
+@keyframes ring-pulse {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+  100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+}
+
+/* ── Agent avatar — idle breathe (opacity only, very subtle) ──────── */
+@keyframes agent-breathe {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 1; }
+}
+.animate-agent-breathe {
+  animation: agent-breathe 4s ease-in-out infinite;
+}
+
+/* ── Agent avatar — working float (1px wiggle) ────────────────────── */
+@keyframes agent-working {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-1px); }
+}
+.animate-agent-working {
+  animation: agent-working 2s ease-in-out infinite;
+}
+
+/* ── First-open cinematic reveal ──────────────────────────────────── */
+
+@keyframes bb-reveal-bg {
+  0%   { opacity: 0; }
+  10%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.bb-reveal-bg {
+  animation: bb-reveal-bg 1800ms var(--bb-ease) both;
+}
+
+@keyframes bb-reveal-box-emerge {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.1); filter: blur(2px); }
+  40%  { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); }
+  60%  { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); }
+  78%  { opacity: 0; transform: translate(-50%, -50%) scale(1.05); filter: blur(1px); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); filter: blur(1px); }
+}
+.bb-reveal-box {
+  animation: bb-reveal-box-emerge 1800ms var(--bb-ease) both;
+}
+
+@keyframes bb-reveal-seam-h {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scaleX(0); }
+  22%  { opacity: 0; transform: translate(-50%, -50%) scaleX(0); }
+  50%  { opacity: 0.9; transform: translate(-50%, -50%) scaleX(2.4); }
+  75%  { opacity: 0; transform: translate(-50%, -50%) scaleX(3.2); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scaleX(3.2); }
+}
+.bb-reveal-seam-h {
+  animation: bb-reveal-seam-h 1800ms var(--bb-ease) both;
+}
+
+@keyframes bb-reveal-seam-v {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scaleY(0); }
+  22%  { opacity: 0; transform: translate(-50%, -50%) scaleY(0); }
+  50%  { opacity: 0.9; transform: translate(-50%, -50%) scaleY(2.4); }
+  75%  { opacity: 0; transform: translate(-50%, -50%) scaleY(3.2); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scaleY(3.2); }
+}
+.bb-reveal-seam-v {
+  animation: bb-reveal-seam-v 1800ms var(--bb-ease) both;
+}
+
+@keyframes bb-reveal-half-left {
+  0%   { opacity: 0; transform: translate(-50%, -50%) rotateY(0deg); }
+  50%  { opacity: 1; transform: translate(-50%, -50%) rotateY(0deg); }
+  72%  { opacity: 1; transform: translate(-62%, -50%) rotateY(-55deg); }
+  88%  { opacity: 0; transform: translate(-70%, -50%) rotateY(-80deg); }
+  100% { opacity: 0; transform: translate(-70%, -50%) rotateY(-80deg); }
+}
+.bb-reveal-half-left {
+  transform-origin: right center;
+  animation: bb-reveal-half-left 1800ms var(--bb-ease) both;
+}
+
+@keyframes bb-reveal-half-right {
+  0%   { opacity: 0; transform: translate(-50%, -50%) rotateY(0deg); }
+  50%  { opacity: 1; transform: translate(-50%, -50%) rotateY(0deg); }
+  72%  { opacity: 1; transform: translate(-38%, -50%) rotateY(55deg); }
+  88%  { opacity: 0; transform: translate(-30%, -50%) rotateY(80deg); }
+  100% { opacity: 0; transform: translate(-30%, -50%) rotateY(80deg); }
+}
+.bb-reveal-half-right {
+  transform-origin: left center;
+  animation: bb-reveal-half-right 1800ms var(--bb-ease) both;
+}
+
+@keyframes bb-reveal-icon {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  50%  { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  72%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+.bb-reveal-icon {
+  animation: bb-reveal-icon 1800ms var(--bb-ease) both;
+}
+
+@keyframes bb-reveal-bloom {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+  50%  { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+  72%  { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1.4); }
+}
+.bb-reveal-bloom {
+  animation: bb-reveal-bloom 1800ms var(--bb-ease) both;
+}
+
+@keyframes bb-reveal-ray {
+  0%   { opacity: 0; transform: translate(-50%, -50%) rotate(var(--bb-ray-angle, 0deg)) scaleX(0); }
+  55%  { opacity: 0; transform: translate(-50%, -50%) rotate(var(--bb-ray-angle, 0deg)) scaleX(0); }
+  72%  { opacity: 0.8; transform: translate(-50%, -50%) rotate(var(--bb-ray-angle, 0deg)) scaleX(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--bb-ray-angle, 0deg)) scaleX(1.6); }
+}
+.bb-reveal-ray {
+  animation: bb-reveal-ray 1800ms var(--bb-ease) both;
+}
+
+@keyframes bb-reveal-stagger-up {
+  0%   { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.bb-reveal-stagger > * {
+  opacity: 0;
+  animation: bb-reveal-stagger-up 500ms var(--bb-ease) both;
+}
+.bb-reveal-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.bb-reveal-stagger > *:nth-child(2) { animation-delay: 80ms; }
+.bb-reveal-stagger > *:nth-child(3) { animation-delay: 160ms; }
+.bb-reveal-stagger > *:nth-child(4) { animation-delay: 240ms; }
+.bb-reveal-stagger > *:nth-child(5) { animation-delay: 320ms; }
+.bb-reveal-stagger > *:nth-child(6) { animation-delay: 400ms; }
+.bb-reveal-stagger > *:nth-child(7) { animation-delay: 480ms; }
+.bb-reveal-stagger > *:nth-child(8) { animation-delay: 560ms; }
+
+/* ── Reduced motion ────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .bb-card-arrive,
+  .bb-card-mount,
+  .bb-pulse,
+  .bb-spin,
+  .animate-fade-up,
+  .animate-glow-pulse,
+  .animate-emerald-glow,
+  .animate-blue-glow,
+  .animate-gradient-drift,
+  .animate-soft-breathe,
+  .animate-number-reveal,
+  .animate-slide-in,
+  .animate-fade-in,
+  .animate-welcome-fade-up,
+  .animate-splash-breathe,
+  .animate-agent-breathe,
+  .animate-agent-working,
+  .bb-reveal-bg,
+  .bb-reveal-box,
+  .bb-reveal-seam-h,
+  .bb-reveal-seam-v,
+  .bb-reveal-half-left,
+  .bb-reveal-half-right,
+  .bb-reveal-icon,
+  .bb-reveal-bloom,
+  .bb-reveal-ray,
+  .bb-reveal-stagger > *,
+  .stagger-children > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  /* ws/chat-polish (2026-07-20, THEME I) — Tailwind's own animate-pulse
+     is used for the streaming caret + several "working" dots in the
+     Boardroom; it was NOT covered by the reduced-motion block above, so
+     motion-sensitive users still saw the pulse. Freeze the pulse (leave
+     the element visible). animate-spin loaders keep spinning — a static
+     spinner glyph reads as broken and the motion conveys live status. */
+  .animate-pulse {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CHAT SURFACE ENTRANCES — Boardroom luxury polish
+   Each bubble / chip / panel fades in and translates-up subtly on mount.
+   Timings are short (150–200ms) so the chat still feels snappy; motion
+   uses --bb-ease-out so entrances decelerate into place.
+   ══════════════════════════════════════════════════════════════════════ */
+
+@keyframes bb-chat-bubble-enter-kf {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+.bb-chat-bubble-enter {
+  animation: bb-chat-bubble-enter-kf 200ms var(--bb-ease-out) both;
+}
+
+@keyframes bb-chat-chip-enter-kf {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1);   }
+}
+.bb-chat-chip-enter {
+  animation: bb-chat-chip-enter-kf 150ms var(--bb-ease-out) both;
+}
+
+@keyframes bb-task-chip-enter-kf {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1);    }
+}
+.bb-task-chip-enter {
+  animation: bb-task-chip-enter-kf 180ms var(--bb-ease-out) both;
+}
+
+@keyframes bb-task-chip-halo-kf {
+  0%, 100% { box-shadow: 0 4px 12px rgba(201, 168, 76, 0.10); }
+  50%      { box-shadow: 0 4px 16px rgba(201, 168, 76, 0.22); }
+}
+.bb-task-chip-halo {
+  animation: bb-task-chip-halo-kf 2.6s var(--bb-ease-in-out) infinite;
+}
+
+@keyframes bb-panel-enter-kf {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1);    }
+}
+.bb-panel-enter {
+  animation: bb-panel-enter-kf 180ms var(--bb-ease-out) both;
+  transform-origin: bottom left;
+}
+
+@keyframes bb-suggestion-enter-kf {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+.bb-suggestion-stagger > * {
+  opacity: 0;
+  animation: bb-suggestion-enter-kf 180ms var(--bb-ease-out) both;
+}
+.bb-suggestion-stagger > *:nth-child(1) { animation-delay: 0ms;   }
+.bb-suggestion-stagger > *:nth-child(2) { animation-delay: 60ms;  }
+.bb-suggestion-stagger > *:nth-child(3) { animation-delay: 120ms; }
+.bb-suggestion-stagger > *:nth-child(4) { animation-delay: 180ms; }
+.bb-suggestion-stagger > *:nth-child(5) { animation-delay: 240ms; }
+.bb-suggestion-stagger > *:nth-child(6) { animation-delay: 300ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bb-chat-bubble-enter,
+  .bb-chat-chip-enter,
+  .bb-task-chip-enter,
+  .bb-task-chip-halo,
+  .bb-panel-enter,
+  .bb-suggestion-stagger > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   LUXURY POLISH KEYFRAMES — Team + Inbox surfaces
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Division group fade-up — 4px over 250ms */
+@keyframes bb-division-fade-up {
+  0%   { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Ticker dot — pulsing gold */
+@keyframes bb-ticker-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.15); }
+}
+
+/* Status dot — subtle working pulse */
+@keyframes bb-status-pulse {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%      { opacity: 0.70; transform: scale(1.10); }
+}
+
+/* Empty-state icon — gentle breathing */
+@keyframes bb-empty-breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.02); }
+}
+
+/* Empty-state helper-text fade */
+@keyframes bb-empty-fade {
+  0%   { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bb-division-stagger > *,
+  .bb-event-stagger > *,
+  .bb-empty-stagger > *,
+  .bb-empty-icon,
+  .bb-ticker-dot,
+  .bb-status-dot-working {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ── Lesson highlight pulse — used after deep-link from Chat ───────── */
+@keyframes bb-lesson-highlight-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0); }
+  30%      { box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.35); }
+  70%      { box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.20); }
+}
+.bb-lesson-highlight {
+  animation: bb-lesson-highlight-pulse 2.2s ease-out;
+}
+
+/* ── Inbox badge bounce-down — fires once when the pending count
+   decrements (card resolved / dismissed). Restrained Linear/Raycast
+   aesthetic: a quick 320ms scale dip, not a flashy bounce. */
+@keyframes bb-badge-bounce-down {
+  0%   { transform: translateY(0)     scale(1); }
+  35%  { transform: translateY(2px)   scale(0.92); }
+  65%  { transform: translateY(-1px)  scale(1.04); }
+  100% { transform: translateY(0)     scale(1); }
+}
+.bb-badge-bounce-down {
+  animation: bb-badge-bounce-down 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .bb-badge-bounce-down { animation: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bb-lesson-highlight { animation: none !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SPLASH — looping variant of the first-open cinematic. Same gold-box-
+   opens language, but motions loop so the scene reads as "waiting"
+   rather than "reveal." Used while the engine warms up.
+   ══════════════════════════════════════════════════════════════════════ */
+
+@keyframes bb-splash-scene-fadein {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes bb-splash-box-breathe {
+  0%, 100% { opacity: 0.8;  transform: scale(1);    }
+  50%      { opacity: 1;    transform: scale(1.04); }
+}
+@keyframes bb-splash-bloom-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1);    }
+  50%      { opacity: 0.95; transform: scale(1.08); }
+}
+@keyframes bb-splash-seam-pulse-h {
+  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scaleX(0.6); }
+  50%      { opacity: 1;   transform: translate(-50%, -50%) scaleX(1.1); }
+}
+@keyframes bb-splash-seam-pulse-v {
+  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scaleY(0.6); }
+  50%      { opacity: 1;   transform: translate(-50%, -50%) scaleY(1.1); }
+}
+@keyframes bb-splash-ray-sweep {
+  0%   { opacity: 0;   transform: rotate(var(--bb-ray-angle)) scaleX(0.4); }
+  40%  { opacity: 0.8; transform: rotate(var(--bb-ray-angle)) scaleX(1);   }
+  100% { opacity: 0;   transform: rotate(var(--bb-ray-angle)) scaleX(1.3); }
+}
+@keyframes bb-splash-icon-breathe {
+  0%, 100% { transform: scale(1);    filter: drop-shadow(0 0 16px rgba(201,168,76,0.28)); }
+  50%      { transform: scale(1.06); filter: drop-shadow(0 0 28px rgba(201,168,76,0.45)); }
+}
+
+.bb-splash-scene {
+  animation: bb-splash-scene-fadein 320ms ease-out both;
+}
+.bb-splash-box   { animation: bb-splash-box-breathe    3.6s ease-in-out infinite; }
+.bb-splash-bloom { animation: bb-splash-bloom-breathe  3.6s ease-in-out infinite; }
+.bb-splash-seam-h { animation: bb-splash-seam-pulse-h  3.6s ease-in-out infinite; }
+.bb-splash-seam-v { animation: bb-splash-seam-pulse-v  3.6s ease-in-out infinite; }
+.bb-splash-icon  { animation: bb-splash-icon-breathe   3.6s ease-in-out infinite; }
+.bb-splash-ray   { opacity: 0; animation: bb-splash-ray-sweep 2.8s ease-in-out infinite; }
+.bb-splash-ray:nth-of-type(odd)  { animation-delay: 0ms;   }
+.bb-splash-ray:nth-of-type(even) { animation-delay: 700ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bb-splash-scene,
+  .bb-splash-box,
+  .bb-splash-bloom,
+  .bb-splash-seam-h,
+  .bb-splash-seam-v,
+  .bb-splash-ray,
+  .bb-splash-icon {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}

@@ -1,0 +1,10 @@
+# Railway / Nixpacks build config for the Tessera static SPA.
+# Build produces dist/, then `serve` hosts it on Railway's $PORT.
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm start"
