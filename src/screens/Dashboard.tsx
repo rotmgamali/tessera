@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   FileStack,
@@ -11,49 +12,15 @@ import {
   PenLine,
   Boxes,
   FileSearch,
+  Loader2,
 } from "lucide-react";
-import {
-  kpis,
-  sites,
-  activity,
-  deadlines,
-  daysUntil,
-} from "../fixtures";
+import { deadlines, daysUntil } from "../fixtures";
 import { Card, SectionHeading, Pill, clusterFlag, healthMeta, fmtTonnes } from "../components/ui";
-import type { ActivityItem } from "../fixtures";
+import { api, type ApiDashboard } from "../lib/api";
 
-const kpiTiles = [
-  {
-    label: "Certificates in-flight",
-    value: kpis.certsInFlight,
-    sub: `of ${kpis.totalCerts} in the inbox`,
-    icon: FileStack,
-    to: "/certificates",
-  },
-  {
-    label: "Pending reviews",
-    value: kpis.pendingReviews,
-    sub: "needs-review + flagged",
-    icon: ScrollText,
-    to: "/certificates",
-  },
-  {
-    label: "Verified chain-of-custody",
-    value: `${kpis.verifiedTonnes} t`,
-    sub: "sub-MOQ feedstock, double-count-free",
-    icon: Weight,
-    to: "/provenance",
-  },
-  {
-    label: "Sites in good standing",
-    value: `${kpis.sitesHealthy}/${kpis.sitesTotal}`,
-    sub: `${kpis.sitesWatch} watch · ${kpis.sitesBreach} breach`,
-    icon: ShieldCheck,
-    to: "/ledger",
-  },
-];
+type ActivityKind = "extract" | "verify" | "flag" | "sign" | "aggregate" | "audit";
 
-const activityIcon: Record<ActivityItem["kind"], typeof CheckCircle2> = {
+const activityIcon: Record<ActivityKind, typeof CheckCircle2> = {
   extract: FileSearch,
   verify: CheckCircle2,
   flag: Flag,
@@ -62,7 +29,7 @@ const activityIcon: Record<ActivityItem["kind"], typeof CheckCircle2> = {
   audit: AlertTriangle,
 };
 
-const activityTone: Record<ActivityItem["kind"], "info" | "success" | "danger" | "gold" | "warning"> = {
+const activityTone: Record<ActivityKind, "info" | "success" | "danger" | "gold" | "warning"> = {
   extract: "info",
   verify: "success",
   flag: "danger",
@@ -72,8 +39,64 @@ const activityTone: Record<ActivityItem["kind"], "info" | "success" | "danger" |
 };
 
 export default function Dashboard() {
+  const [data, setData] = useState<ApiDashboard | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    api
+      .dashboard()
+      .then((d) => alive && setData(d))
+      .catch((e) => alive && setError(String(e.message ?? e)));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const kpis = data?.kpis;
+  const kpiTiles = [
+    {
+      label: "Certificates in-flight",
+      value: kpis?.certsInFlight ?? "—",
+      sub: `of ${kpis?.totalCerts ?? "—"} in the inbox`,
+      icon: FileStack,
+      to: "/certificates",
+    },
+    {
+      label: "Pending reviews",
+      value: kpis?.pendingReviews ?? "—",
+      sub: "needs-review + flagged",
+      icon: ScrollText,
+      to: "/certificates",
+    },
+    {
+      label: "Verified chain-of-custody",
+      value: kpis ? `${kpis.verifiedTonnes} t` : "—",
+      sub: "sub-MOQ feedstock, double-count-free",
+      icon: Weight,
+      to: "/provenance",
+    },
+    {
+      label: "Sites in good standing",
+      value: kpis ? `${kpis.sitesHealthy}/${kpis.sitesTotal}` : "—",
+      sub: kpis ? `${kpis.sitesWatch} watch · ${kpis.sitesBreach} breach` : "computing…",
+      icon: ShieldCheck,
+      to: "/ledger",
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-6">
+      {error && (
+        <div
+          className="flex items-center gap-2 rounded-lg px-3 py-2 border text-bb-caption"
+          style={{ background: "var(--bb-error-bg)", borderColor: "rgba(239,68,68,0.35)", color: "var(--bb-danger)" }}
+        >
+          <AlertTriangle className="w-4 h-4" />
+          Could not load the dashboard: {error}
+        </div>
+      )}
+
       {/* KPI tiles */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiTiles.map((t) => (
@@ -96,7 +119,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Deadline countdown cards */}
+      {/* Deadline countdown cards (static regulatory dates — fixtures) */}
       <div>
         <SectionHeading right={<span className="text-bb-micro text-bb-text-muted">In-app date · 20 Jul 2026</span>}>
           Regulatory countdown
@@ -128,16 +151,21 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Per-site mass-balance health strip */}
+        {/* Per-site mass-balance health strip — computed by the engine */}
         <div className="lg:col-span-2">
           <SectionHeading right={<Link to="/ledger" className="text-bb-caption text-bb-gold hover:underline">Open ledger →</Link>}>
             Mass-balance health per site
           </SectionHeading>
           <div className="flex flex-col gap-3">
-            {sites.map((s) => {
+            {!data && (
+              <div className="bb-luxury-card p-4 text-bb-caption text-bb-text-muted flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" /> Computing per-site balances…
+              </div>
+            )}
+            {data?.sites.map((s) => {
               const hm = healthMeta[s.health];
-              const attributedPct = Math.min(100, Math.round((s.attributedKg / s.creditBalanceKg) * 100));
-              const over = s.attributedKg > s.creditBalanceKg;
+              const attributedPct = s.poolKg > 0 ? Math.min(100, Math.round((s.attributedKg / s.poolKg) * 100)) : 0;
+              const over = s.closingKg < 0;
               return (
                 <Card key={s.id}>
                   <div className="flex items-center justify-between mb-2">
@@ -145,7 +173,7 @@ export default function Dashboard() {
                       <span className="text-base">{clusterFlag[s.cluster]}</span>
                       <div className="min-w-0">
                         <div className="text-bb-body font-medium text-bb-text-primary truncate">{s.name}</div>
-                        <div className="text-bb-micro text-bb-text-muted">{s.iscCertNo} · {s.currentPeriod}</div>
+                        <div className="text-bb-micro text-bb-text-muted">{s.isccCertNo} · {s.currentPeriodLabel}</div>
                       </div>
                     </div>
                     <Pill tone={hm.tone}>{hm.label}</Pill>
@@ -159,7 +187,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex items-center justify-between mt-2 text-bb-micro">
                     <span className="text-bb-text-muted bb-numeric">
-                      {fmtTonnes(s.attributedKg)} attributed / {fmtTonnes(s.creditBalanceKg)} certified in
+                      {fmtTonnes(s.attributedKg)} attributed / {fmtTonnes(s.poolKg)} credit pool
                     </span>
                     <span className="bb-numeric" style={{ color: over ? "var(--bb-danger)" : "var(--bb-text-secondary)" }}>
                       {over ? "Over-attributed" : `${100 - attributedPct}% headroom`}
@@ -176,9 +204,10 @@ export default function Dashboard() {
           <SectionHeading>Recent activity</SectionHeading>
           <Card className="p-0 overflow-hidden">
             <ul className="divide-y" style={{ borderColor: "var(--bb-border)" }}>
-              {activity.slice(0, 8).map((a) => {
-                const Icon = activityIcon[a.kind];
-                const tone = activityTone[a.kind];
+              {(data?.activity ?? []).slice(0, 8).map((a) => {
+                const kind = a.kind as ActivityKind;
+                const Icon = activityIcon[kind] ?? CheckCircle2;
+                const tone = activityTone[kind] ?? "info";
                 const color: Record<string, string> = {
                   info: "var(--bb-info)",
                   success: "var(--bb-success)",

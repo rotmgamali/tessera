@@ -1,5 +1,6 @@
-# Railway / Nixpacks build config for the Tessera static SPA.
-# Build produces dist/, then `serve` hosts it on Railway's $PORT.
+# Railway / Nixpacks build config for Tessera — a SINGLE Node service that
+# serves both the /api routes and the built SPA (dist/). Build produces the
+# SPA in dist/ and the compiled server in server-dist/; `npm start` runs it.
 [phases.setup]
 nixPkgs = ["nodejs_20"]
 

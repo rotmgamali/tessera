@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -8,31 +8,77 @@ import {
   Link2,
   Scale,
   TrendingDown,
+  Loader2,
 } from "lucide-react";
-import {
-  sites,
-  siteById,
-  ledgerForSite,
-  periods,
-  type LedgerEntry,
-} from "../fixtures";
+import { api, type ApiSite, type ApiPeriod, type ApiLedger, type ApiLedgerEntry } from "../lib/api";
 import { Pill, healthMeta, fmtKg, clusterFlag } from "../components/ui";
 
 export default function Ledger() {
-  const [siteId, setSiteId] = useState(sites[0].id);
-  const [period, setPeriod] = useState(periods[0]);
+  const [sites, setSites] = useState<ApiSite[]>([]);
+  const [siteId, setSiteId] = useState<string>("");
+  const [periods, setPeriods] = useState<ApiPeriod[]>([]);
+  const [period, setPeriod] = useState<string>("");
+  const [ledger, setLedger] = useState<ApiLedger | null>(null);
   const [auditor, setAuditor] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const site = siteById(siteId)!;
-  const entries = ledgerForSite(siteId, period);
-  const hm = healthMeta[site.health];
+  // Load the site list once.
+  useEffect(() => {
+    let alive = true;
+    api
+      .sites()
+      .then((r) => {
+        if (!alive) return;
+        setSites(r.sites);
+        setSiteId((cur) => cur || r.sites[0]?.id || "");
+      })
+      .catch((e) => alive && setError(String(e.message ?? e)));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
-  const inputs = entries.filter((e) => e.type === "input");
-  const outputs = entries.filter((e) => e.type === "output");
-  const totalIn = inputs.reduce((s, e) => s + e.quantityKg, 0);
-  const totalOut = outputs.reduce((s, e) => s + e.quantityKg, 0);
-  const closing = entries.length ? entries[entries.length - 1].runningBalanceKg : 0;
+  // Load periods whenever the site changes; select the newest.
+  useEffect(() => {
+    if (!siteId) return;
+    let alive = true;
+    api
+      .periods(siteId)
+      .then((r) => {
+        if (!alive) return;
+        setPeriods(r.periods);
+        setPeriod(r.periods[0]?.id || "");
+      })
+      .catch((e) => alive && setError(String(e.message ?? e)));
+    return () => {
+      alive = false;
+    };
+  }, [siteId]);
+
+  // Load the computed ledger for the selected site + period.
+  useEffect(() => {
+    if (!siteId || !period) return;
+    let alive = true;
+    setLoading(true);
+    setError(null);
+    api
+      .ledger(siteId, period)
+      .then((r) => alive && setLedger(r))
+      .catch((e) => alive && setError(String(e.message ?? e)))
+      .finally(() => alive && setLoading(false));
+    return () => {
+      alive = false;
+    };
+  }, [siteId, period]);
+
+  const entries = ledger?.entries ?? [];
+  const summary = ledger?.summary;
+  const health = ledger?.site.health ?? "healthy";
+  const hm = healthMeta[health];
   const warnings = entries.filter((e) => e.doubleCountRisk && e.doubleCountRisk !== "none");
+  const overAttr = ledger?.violations.find((v) => v.type === "OVER_ATTRIBUTION");
+  const standardMix = ledger?.violations.find((v) => v.type === "STANDARD_MIX");
 
   return (
     <div className="flex flex-col gap-5">
@@ -60,12 +106,18 @@ export default function Ledger() {
             className="bb-luxury-input px-3 py-1.5 text-bb-caption text-bb-text-primary"
           >
             {periods.map((p) => (
-              <option key={p} value={p}>{p}</option>
+              <option key={p.id} value={p.id}>{p.label}</option>
             ))}
           </select>
         </div>
 
         <div className="flex-1" />
+
+        {loading && (
+          <span className="inline-flex items-center gap-1.5 text-bb-micro text-bb-text-muted">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Computing balance…
+          </span>
+        )}
 
         {/* Auditor view toggle */}
         <button
@@ -76,6 +128,16 @@ export default function Ledger() {
           Auditor view {auditor ? "on" : "off"}
         </button>
       </div>
+
+      {error && (
+        <div
+          className="flex items-center gap-2 rounded-lg px-3 py-2 border text-bb-caption"
+          style={{ background: "var(--bb-error-bg)", borderColor: "rgba(239,68,68,0.35)", color: "var(--bb-danger)" }}
+        >
+          <AlertTriangle className="w-4 h-4" />
+          Could not load the mass-balance ledger: {error}
+        </div>
+      )}
 
       {auditor && (
         <div
@@ -89,32 +151,45 @@ export default function Ledger() {
 
       {/* Summary strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <SummaryTile icon={ArrowDownRight} label="Certified feedstock in" value={fmtKg(totalIn)} tone="success" />
-        <SummaryTile icon={ArrowUpRight} label="Attributed to output" value={fmtKg(totalOut)} tone="info" />
-        <SummaryTile icon={Scale} label="Closing balance" value={fmtKg(closing)} tone={closing < 0 ? "danger" : "gold"} />
-        <SummaryTile icon={TrendingDown} label="Conversion factor" value={site.conversionFactor.toFixed(2)} tone="neutral" sub="consumption/yield" />
+        <SummaryTile icon={ArrowDownRight} label="Certified feedstock in" value={fmtKg(summary?.creditedInputsKg ?? 0)} tone="success" />
+        <SummaryTile icon={ArrowUpRight} label="Attributed to output" value={fmtKg(summary?.attributedOutputsKg ?? 0)} tone="info" />
+        <SummaryTile
+          icon={Scale}
+          label="Closing balance"
+          value={fmtKg(summary?.closingBalanceKg ?? 0)}
+          tone={(summary?.closingBalanceKg ?? 0) < 0 ? "danger" : "gold"}
+        />
+        <SummaryTile
+          icon={TrendingDown}
+          label="Conversion factor"
+          value={(summary?.conversionFactor ?? 0).toFixed(2)}
+          tone="neutral"
+          sub={`${fmtKg(summary?.lossesKg ?? 0)} process loss`}
+        />
       </div>
 
-      {/* Breach / warning banner */}
-      {site.health !== "healthy" && (
+      {/* Breach / warning banner — driven by real computed violations */}
+      {health !== "healthy" && (
         <div
           className="flex items-start gap-3 rounded-xl px-4 py-3 border"
           style={{
-            background: site.health === "breach" ? "var(--bb-error-bg)" : "var(--bb-warning-bg)",
-            borderColor: site.health === "breach" ? "rgba(239,68,68,0.35)" : "var(--bb-border-amber)",
+            background: health === "breach" ? "var(--bb-error-bg)" : "var(--bb-warning-bg)",
+            borderColor: health === "breach" ? "rgba(239,68,68,0.35)" : "var(--bb-border-amber)",
           }}
         >
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" style={{ color: hm.color }} />
           <div>
             <div className="text-bb-body font-medium" style={{ color: hm.color }}>
-              {site.health === "breach"
+              {health === "breach"
                 ? "Mass-balance breach — over-attribution detected"
                 : "Watch — a staged input is held out of attribution"}
             </div>
             <div className="text-bb-caption text-bb-text-secondary mt-0.5">
-              {site.health === "breach"
-                ? "Attributed output exceeds certified input for this continuous period (negative closing balance). Under ISCC PLUS 203-2 this is a reportable breach — correct before assembling any substantiation pack."
-                : "A GRS-standard input cannot be booked into an ISCC PLUS mass balance without creating a double-counting risk. It is staged and blocked from attribution pending a reviewer determination."}
+              {health === "breach"
+                ? overAttr?.message ??
+                  "Attributed output exceeds certified input for this continuous period. Under ISCC PLUS 203-2 this is a reportable breach — correct before assembling any substantiation pack."
+                : standardMix?.message ??
+                  "A GRS-standard input cannot be booked into an ISCC PLUS mass balance without creating a double-counting risk. It is staged and blocked from attribution pending a reviewer determination."}
             </div>
           </div>
         </div>
@@ -124,10 +199,12 @@ export default function Ledger() {
       <div className="bb-luxury-card p-0 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "var(--bb-border)" }}>
           <div className="flex items-center gap-2">
-            <span className="text-bb-body font-medium text-bb-text-primary">{site.name}</span>
+            <span className="text-bb-body font-medium text-bb-text-primary">{ledger?.site.name ?? "—"}</span>
             <Pill tone={hm.tone}>{hm.label}</Pill>
           </div>
-          <span className="text-bb-micro text-bb-text-muted">{site.iscCertNo} · {period}</span>
+          <span className="text-bb-micro text-bb-text-muted">
+            {ledger?.site.isccCertNo} · {ledger?.period.label}
+          </span>
         </div>
 
         <div className="overflow-x-auto">
@@ -147,14 +224,21 @@ export default function Ledger() {
               {entries.map((e) => (
                 <LedgerRow key={e.id} e={e} auditor={auditor} />
               ))}
+              {!loading && entries.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-bb-caption text-bb-text-muted">
+                    No movements booked for this period.
+                  </td>
+                </tr>
+              )}
             </tbody>
             <tfoot>
               <tr className="border-t" style={{ borderColor: "var(--bb-border)", background: "rgba(255,255,255,0.02)" }}>
                 <td className="px-4 py-3 text-bb-caption font-medium text-bb-text-secondary" colSpan={5}>
                   Closing certified credit balance
                 </td>
-                <td className="px-4 py-3 text-right bb-numeric font-semibold" style={{ color: closing < 0 ? "var(--bb-danger)" : "var(--bb-gold)" }}>
-                  {closing.toLocaleString("en-US")}
+                <td className="px-4 py-3 text-right bb-numeric font-semibold" style={{ color: (summary?.closingBalanceKg ?? 0) < 0 ? "var(--bb-danger)" : "var(--bb-gold)" }}>
+                  {Math.round(summary?.closingBalanceKg ?? 0).toLocaleString("en-US")}
                 </td>
                 <td />
               </tr>
@@ -229,7 +313,7 @@ function SummaryTile({
   );
 }
 
-function LedgerRow({ e, auditor }: { e: LedgerEntry; auditor: boolean }) {
+function LedgerRow({ e, auditor }: { e: ApiLedgerEntry; auditor: boolean }) {
   const isInput = e.type === "input";
   const risk = e.doubleCountRisk && e.doubleCountRisk !== "none";
   return (
@@ -263,13 +347,13 @@ function LedgerRow({ e, auditor }: { e: LedgerEntry; auditor: boolean }) {
         </span>
       </td>
       <td className="px-4 py-3 text-right bb-numeric" style={{ color: isInput ? "var(--bb-success)" : "var(--bb-info)" }}>
-        {isInput ? "+" : "−"}{e.quantityKg.toLocaleString("en-US")}
+        {isInput ? "+" : "−"}{Math.round(e.quantityKg).toLocaleString("en-US")}
       </td>
       <td className="px-4 py-3 text-right bb-numeric text-bb-text-muted">
         {e.conversionFactor ? e.conversionFactor.toFixed(2) : "—"}
       </td>
       <td className="px-4 py-3 text-right bb-numeric font-medium" style={{ color: e.runningBalanceKg < 0 ? "var(--bb-danger)" : "var(--bb-text-primary)" }}>
-        {e.runningBalanceKg.toLocaleString("en-US")}
+        {Math.round(e.runningBalanceKg).toLocaleString("en-US")}
       </td>
       <td className="px-4 py-3 text-center">
         {risk ? (
